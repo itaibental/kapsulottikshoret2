@@ -593,8 +593,10 @@
         <button class="role-toggle-btn active" id="role-student-btn" data-role="student">🎓 תלמיד/ה</button>
         <button class="role-toggle-btn" id="role-teacher-btn" data-role="teacher">🧑‍🏫 מורה</button>
       </div>
-      <div class="sub" id="name-gate-question" style="margin-bottom:22px;">לפני שמתחילים, איך קוראים לכם?</div>
-      <input id="name-gate-input" type="text" placeholder="השם המלא שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:16px;">
+      <div class="sub" id="name-gate-question" style="margin-bottom:14px;">לפני שמתחילים, איך קוראים לכם?</div>
+      <input id="name-gate-input" type="text" placeholder="השם המלא שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:12px;">
+      <input id="name-gate-password" type="password" placeholder="תמציאו סיסמה לשמירה על החשבון שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:16px;">
+      <div class="sub" id="name-gate-password-hint" style="margin-bottom:10px; font-size:11.5px;">הסיסמה הזו שומרת על ההתקדמות שלכם - אם תכתבו את אותו שם וסיסמה במכשיר אחר, תתחברו לאותה היסטוריה</div>
       <div id="name-gate-msg" class="sub" style="margin-bottom:10px; color:#c23b3b;"></div>
       <button class="btn-primary" id="name-gate-submit" style="width:100%; max-width:320px;">התחילו ללמוד</button>
     </div>
@@ -613,6 +615,7 @@
         <button class="icon-btn" id="my-scores-btn" style="margin-inline-start:auto;" title="התוצאות שלי">🏆</button>
         <button class="icon-btn" id="teacher-key-btn" title="כניסת מורה">🔑</button>
         <button class="icon-btn" id="account-btn">👤</button>
+        <button class="icon-btn" id="logout-btn" title="התנתקות">🚪</button>
       </div>
       <div class="stats-row">
         <div class="stat-pill"><b id="stat-learned">0/28</b><span>מושגים שנלמדו</span></div>
@@ -1052,6 +1055,20 @@
     try{ localStorage.setItem(STUDENT_NAME_KEY, name); }catch(e){}
   }
 
+  // the Firestore doc id holding this student's shared record - may differ
+  // from THIS device's own anonymous auth uid, since a student can log back
+  // into the same username+password from a different device and reconnect
+  // to their original doc (see resolveStudentLogin)
+  const STUDENT_DOC_KEY = "tikshoret_student_doc_id";
+  let studentDocId = null;
+  function loadStudentDocId(){
+    try{ return localStorage.getItem(STUDENT_DOC_KEY) || null; }catch(e){ return null; }
+  }
+  function saveStudentDocId(id){
+    try{ if(id) localStorage.setItem(STUDENT_DOC_KEY, id); else localStorage.removeItem(STUDENT_DOC_KEY); }catch(e){}
+  }
+  studentDocId = loadStudentDocId();
+
   function bumpStreak(){
     const today = new Date().toDateString();
     if(store.lastVisit !== today){
@@ -1164,6 +1181,15 @@
     const data = await res.json();
     return (data.documents||[]).map(d=>Object.assign({id:d.name.split("/").pop()}, docToObject(d)));
   }
+  // finds an existing student record by username (exact match, trimmed) -
+  // lets a student reconnect to their own history from a different device
+  // by typing the same name + password (see resolveStudentLogin)
+  async function firestoreFindStudentByUsername(name){
+    const target = String(name||"").trim();
+    if(!target) return null;
+    const students = await firestoreListStudents();
+    return students.find(s => String(s.username||"").trim() === target) || null;
+  }
 
   // ---------- teacher game lock (shared config doc every student reads) ----------
   async function firestoreGetGameLock(){
@@ -1245,16 +1271,19 @@
     saveAuthState();
     return authState;
   }
-  // ensures this device has a cloud identity tied to the given name, and
-  // pushes the student's current name + progress to Firestore right away so
-  // the teacher dashboard picks them up without any manual sign-up step
+  // ensures this device has a cloud identity, and pushes the student's
+  // current name + progress to Firestore under their already-resolved doc
+  // id (studentDocId) right away, so the teacher dashboard picks it up
+  // without any manual sign-up step. Called on every return visit - never
+  // touches the password field, so it can't accidentally wipe it.
   async function ensureStudentSynced(name){
     try{
       if(!authState) await signInAnonymousStudent();
       authState.username = name;
       saveAuthState();
-      await firestoreSetDoc(authState.uid, {
-        username: name, createdAt: new Date().toISOString(),
+      if(!studentDocId){ studentDocId = authState.uid; saveStudentDocId(studentDocId); }
+      await firestoreSetDoc(studentDocId, {
+        username: name,
         learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal,
         streak: store.streak||0, gameHistory: store.gameHistory||[]
       });
@@ -1264,12 +1293,61 @@
     }
   }
 
+  // looks up an existing record by username and, if the student set a
+  // password on it before, checks it matches - this is how a student
+  // reconnects to their own history from a different device. returns
+  // {ok:true} on success (studentDocId is set as a side effect) or
+  // {ok:false, message} if the password doesn't match an existing record.
+  async function resolveStudentLogin(name, password){
+    let existing = null;
+    try{
+      if(!authState) await signInAnonymousStudent();
+      existing = await firestoreFindStudentByUsername(name);
+      if(existing){
+        const storedPass = existing.password || "";
+        if(storedPass && storedPass !== password){
+          return { ok:false, message:"הסיסמה שגויה. אפשר לבקש מהמורה לבדוק את הסיסמה בדשבורד." };
+        }
+        studentDocId = existing.id;
+        store.learned = existing.learned || {};
+        store.learnCounts = existing.learnCounts || {};
+        if(existing.lastScore != null) store.lastScore = existing.lastScore;
+        if(existing.lastTotal != null) store.lastTotal = existing.lastTotal;
+        if(existing.streak != null) store.streak = existing.streak;
+        store.gameHistory = existing.gameHistory || [];
+        saveStore(store);
+      } else {
+        studentDocId = authState.uid;
+      }
+      saveStudentDocId(studentDocId);
+      authState.username = name;
+      saveAuthState();
+      const payload = {
+        username: name, password,
+        learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal,
+        streak: store.streak||0, gameHistory: store.gameHistory||[]
+      };
+      if(!existing) payload.createdAt = new Date().toISOString();
+      await firestoreSetDoc(studentDocId, payload);
+      return { ok:true };
+    }catch(e){
+      // offline or blocked network - let the student continue locally; this
+      // device just can't verify/reconnect a password-protected history
+      // from elsewhere until the network is back, so fall back to treating
+      // this as this device's own identity
+      if(!studentDocId) studentDocId = authState ? authState.uid : null;
+      if(studentDocId) saveStudentDocId(studentDocId);
+      return { ok:true, offline:true };
+    }
+  }
+
   let cloudSyncTimer = null;
   function scheduleCloudSync(){
     if(!authState) return;
     clearTimeout(cloudSyncTimer);
+    const id = studentDocId || authState.uid;
     cloudSyncTimer = setTimeout(()=>{
-      firestoreSetDoc(authState.uid, {
+      firestoreSetDoc(id, {
         learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal, streak: store.streak||0
       }).catch(()=>{});
     }, 800);
@@ -2254,6 +2332,7 @@
     showView("view-account");
   }
   $("#account-btn").addEventListener("click", openAccount);
+  $("#logout-btn").addEventListener("click", ()=> logoutStudent());
 
   // ---------- MY SCORES (student-facing history of all past games) ----------
   function renderMyScoresList(){
@@ -2284,7 +2363,7 @@
   // ---------- TEACHER KEY ICON (same password gate as the hidden logo-tap entry) ----------
   $("#teacher-key-btn").addEventListener("click", ()=>{
     const pass = prompt("סיסמת מורה:");
-    if(pass === "1234") openTeacherDashboard();
+    if(pass === "sn1234") openTeacherDashboard();
     else if(pass !== null) toast("סיסמה שגויה");
   });
 
@@ -2325,16 +2404,22 @@
         }).join("")}
       </div>
       <button class="btn-secondary" id="reset-name-btn">התחלה מחדש עם שם אחר</button>`;
-    $("#reset-name-btn").addEventListener("click", ()=>{
-      if(confirm("לאפס את השם ולהתחיל מחדש כתלמיד/ה חדש/ה במכשיר הזה?")){
-        try{ localStorage.removeItem(STUDENT_NAME_KEY); }catch(e){}
-        signOutUser();
-        location.reload();
-      }
-    });
+    $("#reset-name-btn").addEventListener("click", ()=> logoutStudent());
   }
 
-  // ---------- TEACHER DASHBOARD (hidden entry: tap the logo 5x, password 1234) ----------
+  // clears this device's student identity (name + Firebase session) and
+  // sends them back to the name gate - used by the account screen's "start
+  // over" button and by the quick logout button at the top of the home screen
+  function logoutStudent(){
+    if(confirm("להתנתק ולהתחיל מחדש כתלמיד/ה חדש/ה במכשיר הזה?")){
+      try{ localStorage.removeItem(STUDENT_NAME_KEY); }catch(e){}
+      saveStudentDocId(null);
+      signOutUser();
+      location.reload();
+    }
+  }
+
+  // ---------- TEACHER DASHBOARD (hidden entry: tap the logo 5x, password sn1234) ----------
   let brandTapCount = 0, brandTapTimer = null;
   $("#brand-mark-tap").addEventListener("click", ()=>{
     brandTapCount++;
@@ -2343,7 +2428,7 @@
     if(brandTapCount >= 5){
       brandTapCount = 0;
       const pass = prompt("סיסמת מורה:");
-      if(pass === "1234") openTeacherDashboard();
+      if(pass === "sn1234") openTeacherDashboard();
       else if(pass !== null) toast("סיסמה שגויה");
     }
   });
@@ -2444,6 +2529,7 @@
     detail.innerHTML = `
       <div class="teacher-row">
         <div class="teacher-row-top"><b>👤 ${s.username||"(ללא שם)"}</b><span class="sub">${learnedCount}/${TERMS.length} מושגים · ציון אחרון: ${s.lastScore!=null ? (s.lastScore+"/"+s.lastTotal) : "–"}</span></div>
+        <div class="sub" style="margin-bottom:8px;">🔑 סיסמה: <b style="color:var(--ink);">${s.password || "(לא הוגדרה סיסמה)"}</b></div>
         <div>${perArena}</div>
       </div>
 
@@ -3020,7 +3106,7 @@
     if(store.gameHistory.length > 50) store.gameHistory = store.gameHistory.slice(-50);
     saveStore(store);
     if(authState){
-      firestoreSetDoc(authState.uid, { gameHistory: store.gameHistory }).catch(()=>{});
+      firestoreSetDoc(studentDocId || authState.uid, { gameHistory: store.gameHistory }).catch(()=>{});
     }
 
     revealMedalThenProceed(pct, ()=>{
@@ -3089,16 +3175,21 @@
     $("#name-gate-input").placeholder = isTeacher ? "סיסמת מורה" : "השם המלא שלכם";
     $("#name-gate-input").type = isTeacher ? "password" : "text";
     $("#name-gate-input").value = "";
+    $("#name-gate-password").value = "";
+    $("#name-gate-password").style.display = isTeacher ? "none" : "block";
+    $("#name-gate-password-hint").style.display = isTeacher ? "none" : "block";
     $("#name-gate-msg").textContent = "";
     $("#name-gate-submit").textContent = isTeacher ? "כניסה לדשבורד מורה" : "התחילו ללמוד";
   }
   $("#role-student-btn").addEventListener("click", ()=> setNameGateRole("student"));
   $("#role-teacher-btn").addEventListener("click", ()=> setNameGateRole("teacher"));
 
-  function submitNameGate(){
+  let nameGateBusy = false;
+  async function submitNameGate(){
+    if(nameGateBusy) return;
     if(nameGateRole === "teacher"){
       const pass = $("#name-gate-input").value.trim();
-      if(pass !== "1234"){
+      if(pass !== "sn1234"){
         $("#name-gate-msg").textContent = "סיסמה שגויה.";
         return;
       }
@@ -3107,18 +3198,34 @@
       return;
     }
     const name = $("#name-gate-input").value.trim();
+    const password = $("#name-gate-password").value.trim();
     if(!name){
       $("#name-gate-msg").textContent = "כתבו את שמכם המלא כדי להמשיך.";
       return;
     }
-    setStudentName(name);
+    if(!password || password.length < 4){
+      $("#name-gate-msg").textContent = "תמציאו סיסמה של לפחות 4 תווים כדי להמשיך.";
+      return;
+    }
+    nameGateBusy = true;
     $("#name-gate-msg").textContent = "";
+    $("#name-gate-submit").textContent = "בודקים...";
+    const result = await resolveStudentLogin(name, password);
+    nameGateBusy = false;
+    $("#name-gate-submit").textContent = "התחילו ללמוד";
+    if(!result.ok){
+      $("#name-gate-msg").textContent = result.message || "אירעה שגיאה. נסו שוב.";
+      return;
+    }
+    setStudentName(name);
     renderHome();
     showView("view-home");
-    ensureStudentSynced(name); // registers/updates this student in the cloud silently, no password needed
   }
   $("#name-gate-submit").addEventListener("click", submitNameGate);
   $("#name-gate-input").addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") submitNameGate();
+  });
+  $("#name-gate-password").addEventListener("keydown", (e)=>{
     if(e.key === "Enter") submitNameGate();
   });
 
