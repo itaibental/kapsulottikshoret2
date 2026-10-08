@@ -238,7 +238,7 @@
     background:var(--surface-2); border-radius:16px; padding:5px;
   }
   .role-toggle-btn{
-    flex:1; padding:11px 8px; border-radius:12px; font-weight:700; font-size:14.5px;
+    flex:1; padding:11px 4px; border-radius:12px; font-weight:700; font-size:14.5px;
     color:var(--ink-soft); background:transparent; text-align:center;
   }
   .role-toggle-btn.active{background:var(--surface); color:var(--accent); box-shadow:var(--shadow);}
@@ -594,6 +594,7 @@
       <div class="role-toggle">
         <button class="role-toggle-btn active" id="role-student-btn" data-role="student">🎓 תלמיד/ה</button>
         <button class="role-toggle-btn" id="role-teacher-btn" data-role="teacher">🧑‍🏫 מורה</button>
+        <button class="role-toggle-btn" id="role-admin-btn" data-role="admin">⚙️ מנהל</button>
       </div>
       <div class="sub" id="name-gate-question" style="margin-bottom:14px;">לפני שמתחילים, איך קוראים לכם?</div>
       <input id="name-gate-input" type="text" placeholder="השם המלא שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:12px;">
@@ -853,7 +854,7 @@
   <!-- TEACHER DASHBOARD -->
   <div class="view" id="view-admin">
     <div class="topbar">
-      <button class="icon-btn" data-action="go-home">›</button>
+      <button class="icon-btn" id="admin-back-btn">›</button>
       <div style="flex:1">
         <h2>⚙️ ניהול מערכת</h2>
         <div class="sub">בתי ספר, סיסמאות מורים ותצוגת מורה</div>
@@ -2580,8 +2581,15 @@
   }
   $("#teacher-back-btn").addEventListener("click", ()=>{
     if(adminViewing){ openAdminDashboard(); }
-    else { renderHome(); showView("view-home"); }
+    else leaveStaffArea();
   });
+  $("#admin-back-btn").addEventListener("click", leaveStaffArea);
+  // staff (teacher/admin) who came in from the login screen have no student
+  // identity on this device, so "back" returns them to the login screen
+  function leaveStaffArea(){
+    if(getStudentName()){ renderHome(); showView("view-home"); }
+    else { setNameGateRole("student"); showView("view-name-gate"); }
+  }
 
   function arenaProgressList(){
     return ARENAS.filter(a=>a.active).map(a=>{
@@ -3490,27 +3498,43 @@
     nameGateRole = role;
     $("#role-student-btn").classList.toggle("active", role === "student");
     $("#role-teacher-btn").classList.toggle("active", role === "teacher");
-    const isTeacher = role === "teacher";
-    $("#name-gate-question").textContent = isTeacher ? "סיסמת מורה:" : "לפני שמתחילים, איך קוראים לכם?";
-    $("#name-gate-input").placeholder = isTeacher ? "סיסמת מורה" : "השם המלא שלכם";
+    $("#role-admin-btn").classList.toggle("active", role === "admin");
+    const isAdmin = role === "admin";
+    const isTeacher = role === "teacher" || isAdmin;
+    $("#name-gate-school").style.display = isAdmin ? "none" : "block";
+    $("#name-gate-question").textContent = isAdmin ? "סיסמת מנהל מערכת:" : (isTeacher ? "סיסמת מורה:" : "לפני שמתחילים, איך קוראים לכם?");
+    $("#name-gate-input").placeholder = isAdmin ? "סיסמת מנהל" : (isTeacher ? "סיסמת מורה" : "השם המלא שלכם");
     $("#name-gate-input").type = isTeacher ? "password" : "text";
     $("#name-gate-input").value = "";
     $("#name-gate-password").value = "";
     $("#name-gate-password").style.display = isTeacher ? "none" : "block";
     $("#name-gate-password-hint").style.display = isTeacher ? "none" : "block";
-    $("#name-gate-password-hint").textContent = isTeacher
+    $("#name-gate-password-hint").textContent = isAdmin
+      ? "ניהול בתי ספר, סיסמאות מורים ותצוגת מורה לכל בית ספר"
+      : isTeacher
       ? "בחרו את בית הספר שלכם והקלידו את סיסמת המורים שקיבלתם ממנהל המערכת"
       : "הסיסמה שומרת על ההתקדמות שלכם - אותו שם, סיסמה ובית ספר במכשיר אחר יחברו אתכם לאותה היסטוריה";
     if(isTeacher && teacherSchool) $("#name-gate-school").value = teacherSchool;
     $("#name-gate-msg").textContent = "";
-    $("#name-gate-submit").textContent = isTeacher ? "כניסה לדשבורד מורה" : "התחילו ללמוד";
+    $("#name-gate-submit").textContent = isAdmin ? "כניסה לניהול המערכת" : (isTeacher ? "כניסה לדשבורד מורה" : "התחילו ללמוד");
   }
   $("#role-student-btn").addEventListener("click", ()=> setNameGateRole("student"));
   $("#role-teacher-btn").addEventListener("click", ()=> setNameGateRole("teacher"));
+  $("#role-admin-btn").addEventListener("click", ()=> setNameGateRole("admin"));
 
   let nameGateBusy = false;
   async function submitNameGate(){
     if(nameGateBusy) return;
+    if(nameGateRole === "admin"){
+      if($("#name-gate-input").value.trim() !== ADMIN_PASSWORD){
+        $("#name-gate-msg").textContent = "סיסמה שגויה.";
+        return;
+      }
+      $("#name-gate-msg").textContent = "";
+      adminSavedTeacherSchool = teacherSchool;
+      openAdminDashboard();
+      return;
+    }
     if(nameGateRole === "teacher"){
       const pass = $("#name-gate-input").value.trim();
       const school = $("#name-gate-school").value.trim();
