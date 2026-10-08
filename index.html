@@ -619,6 +619,7 @@
         </div>
         <button class="icon-btn" id="my-scores-btn" style="margin-inline-start:auto;" title="התוצאות שלי">🏆</button>
         <button class="icon-btn" id="teacher-key-btn" title="כניסת מורה">🔑</button>
+        <button class="icon-btn" id="admin-btn" title="ניהול מערכת">⚙️</button>
         <button class="icon-btn" id="account-btn">👤</button>
         <button class="icon-btn" id="logout-btn" title="התנתקות">🚪</button>
       </div>
@@ -850,9 +851,20 @@
   </div>
 
   <!-- TEACHER DASHBOARD -->
-  <div class="view" id="view-teacher">
+  <div class="view" id="view-admin">
     <div class="topbar">
       <button class="icon-btn" data-action="go-home">›</button>
+      <div style="flex:1">
+        <h2>⚙️ ניהול מערכת</h2>
+        <div class="sub">בתי ספר, סיסמאות מורים ותצוגת מורה</div>
+      </div>
+    </div>
+    <div id="admin-body" style="padding:0 16px 30px;"></div>
+  </div>
+
+  <div class="view" id="view-teacher">
+    <div class="topbar">
+      <button class="icon-btn" id="teacher-back-btn">›</button>
       <div style="flex:1">
         <h2>🧑‍🏫 דשבורד מורה</h2>
         <div class="sub">התקדמות תלמידים שנרשמו לאפליקציה</div>
@@ -1233,18 +1245,33 @@
     const data = await res.json();
     return (data.documents||[]).map(d=>Object.assign({id:d.name.split("/").pop()}, docToObject(d)));
   }
-  async function firestoreAddSchool(name){
+  // writes (creates or merges) one school doc; only the fields in obj are touched
+  async function firestoreSetSchool(name, obj){
     if(!authState) await signInAnonymousStudent();
     const token = await ensureFreshToken();
     const clean = String(name||"").trim();
-    const fields = { name: toFirestoreValue(clean), createdAt: toFirestoreValue(new Date().toISOString()) };
-    const res = await fetch(`${FB_FIRESTORE_BASE}/schools/${encodeURIComponent(clean)}?updateMask.fieldPaths=name&updateMask.fieldPaths=createdAt`, {
+    const data = Object.assign({ name: clean }, obj||{});
+    const fields = {}; for(const k in data) fields[k] = toFirestoreValue(data[k]);
+    const mask = Object.keys(data).map(k=>"updateMask.fieldPaths="+encodeURIComponent(k)).join("&");
+    const res = await fetch(`${FB_FIRESTORE_BASE}/schools/${encodeURIComponent(clean)}?${mask}`, {
       method:"PATCH",
       headers:Object.assign({"Content-Type":"application/json"}, token?{Authorization:`Bearer ${token}`}:{}),
       body: JSON.stringify({fields})
     });
-    if(!res.ok) throw new Error("firestore add school failed: "+res.status);
+    if(!res.ok) throw new Error("firestore set school failed: "+res.status);
     return res.json();
+  }
+  function firestoreAddSchool(name, teacherPassword){
+    return firestoreSetSchool(name, { createdAt: new Date().toISOString(), teacherPassword: String(teacherPassword||"").trim() });
+  }
+  async function firestoreDeleteSchool(name){
+    if(!authState) await signInAnonymousStudent();
+    const token = await ensureFreshToken();
+    const res = await fetch(`${FB_FIRESTORE_BASE}/schools/${encodeURIComponent(String(name||"").trim())}`, {
+      method:"DELETE",
+      headers: token ? {Authorization:`Bearer ${token}`} : {}
+    });
+    if(!res.ok) throw new Error("firestore delete school failed: "+res.status);
   }
 
   // ---------- teacher game lock (shared config doc every student reads) ----------
@@ -2417,56 +2444,143 @@
     $("#my-scores-modal-backdrop").classList.remove("show");
   });
 
-  // asks for the teacher password and lets them pick which school's
-  // students to see (from the admin-managed list), then opens the
-  // dashboard - shared by the key icon and the hidden logo-tap entry point
-  async function promptTeacherPasswordThenOpen(){
-    const pass = prompt("סיסמת מורה:");
-    if(pass === null) return;
-    if(pass !== "1234"){ toast("סיסמה שגויה"); return; }
-    let schools = [];
+  // ---------- teacher login ----------
+  // the admin sets a teacher password per school (stored on the school doc);
+  // a school with no password set falls back to the default "1234". before
+  // any school exists, the default password opens the dashboard for everyone.
+  const DEFAULT_TEACHER_PASSWORD = "1234";
+  async function verifyTeacherLogin(school, pass){
+    let schools = null;
     try{ schools = await firestoreListSchools(); }catch(e){}
-    const listText = schools.length ? schools.map(s=>"• "+s.name).join("\n") : "(אין עדיין בתי ספר מוגדרים - יוצגו כל התלמידים)";
-    const school = prompt(`בתי ספר קיימים:\n${listText}\n\nהקלידו את שם בית הספר שלכם בדיוק כפי שמופיע למעלה (או השאירו ריק כדי לראות את כל התלמידים):`, teacherSchool || "");
-    if(school !== null){ teacherSchool = school.trim(); saveTeacherSchool(teacherSchool); }
+    if(schools && schools.length){
+      if(!school) return { ok:false, message:"בחרו את בית הספר שלכם." };
+      const found = schools.find(x=>String(x.name||"").trim() === school);
+      if(!found) return { ok:false, message:"בית הספר לא נמצא ברשימה." };
+      const expected = found.teacherPassword || DEFAULT_TEACHER_PASSWORD;
+      return pass === expected ? { ok:true } : { ok:false, message:"סיסמה שגויה." };
+    }
+    return pass === DEFAULT_TEACHER_PASSWORD ? { ok:true } : { ok:false, message:"סיסמה שגויה." };
+  }
+  function enterTeacherDashboard(school){
+    adminViewing = false;
+    teacherSchool = school;
+    saveTeacherSchool(teacherSchool);
     openTeacherDashboard();
   }
 
-  // hidden admin entry: only someone who knows the admin code can add a new
-  // school environment to the list teachers and students pick from. not
-  // exposed anywhere in the visible UI - reached by rapid-clicking (5+) the
-  // teacher key icon, the same debounced-tap pattern used elsewhere in the
-  // app, instead of a single click (which opens the normal teacher login).
-  async function promptAdminPasswordThenManageSchools(){
-    const code = prompt("קוד גישה:");
-    if(code === null) return;
-    if(code !== "sn1234"){ toast("קוד שגוי"); return; }
+  // key icon / hidden logo tap: pick a school from the admin-managed list,
+  // then enter that school's teacher password
+  async function promptTeacherPasswordThenOpen(){
     let schools = [];
     try{ schools = await firestoreListSchools(); }catch(e){}
-    const listText = schools.length ? schools.map(s=>"• "+s.name).join("\n") : "(אין עדיין בתי ספר)";
-    const newName = prompt(`מצב מנהל - בתי ספר קיימים:\n${listText}\n\nהקלידו שם בית ספר חדש להוספה (השאירו ריק לביטול):`);
-    if(!newName || !newName.trim()) return;
-    try{
-      await firestoreAddSchool(newName.trim());
-      toast(`בית הספר "${newName.trim()}" נוסף בהצלחה`);
-    }catch(e){
-      toast("שגיאה בהוספת בית הספר");
+    let school = "";
+    if(schools.length){
+      const listText = schools.map(s=>"• "+s.name).join("\n");
+      const picked = prompt(`בתי ספר:\n${listText}\n\nהקלידו את שם בית הספר שלכם בדיוק כפי שמופיע ברשימה:`, teacherSchool || "");
+      if(picked === null) return;
+      school = picked.trim();
     }
+    const pass = prompt(school ? `סיסמת מורה - ${school}:` : "סיסמת מורה:");
+    if(pass === null) return;
+    const res = await verifyTeacherLogin(school, pass.trim());
+    if(!res.ok){ toast(res.message); return; }
+    enterTeacherDashboard(school);
+  }
+  $("#teacher-key-btn").addEventListener("click", promptTeacherPasswordThenOpen);
+
+  // ---------- ADMIN DASHBOARD (separate from the teacher dashboard) ----------
+  const ADMIN_PASSWORD = "sn1234";
+  let adminViewing = false;        // true while the admin is looking at a school's teacher view
+  let adminSavedTeacherSchool = "";
+  function escHtml(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+  $("#admin-btn").addEventListener("click", ()=>{
+    const code = prompt("סיסמת מנהל מערכת:");
+    if(code === null) return;
+    if(code !== ADMIN_PASSWORD){ toast("סיסמה שגויה"); return; }
+    adminSavedTeacherSchool = teacherSchool;
+    openAdminDashboard();
+  });
+
+  async function openAdminDashboard(){
+    if(adminViewing){ teacherSchool = adminSavedTeacherSchool; adminViewing = false; }
+    showView("view-admin");
+    const body = $("#admin-body");
+    body.innerHTML = `<div class="sub">טוען...</div>`;
+    let schools, students = [];
+    try{ schools = await firestoreListSchools(); }
+    catch(e){ body.innerHTML = `<div class="sub">שגיאה בטעינת בתי הספר. ודאו שכללי Firestore כוללים את האוסף schools.</div>`; return; }
+    try{ students = await firestoreListStudents(); }catch(e){}
+    schools.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""), "he"));
+    const inputStyle = "width:100%; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; margin-bottom:8px;";
+    const countFor = (name)=> students.filter(st=>String(st.school||"").trim() === String(name||"").trim()).length;
+    body.innerHTML = `
+      <div class="section-title" style="margin:6px 0;">הוספת בית ספר</div>
+      <div class="teacher-row">
+        <input id="admin-new-school" type="text" placeholder="שם בית הספר" style="${inputStyle}">
+        <input id="admin-new-pass" type="text" placeholder="סיסמת כניסה למורים (ריק = ${DEFAULT_TEACHER_PASSWORD})" style="${inputStyle}">
+        <button class="btn-primary" id="admin-add-btn">➕ הוספת בית ספר</button>
+      </div>
+      <div class="section-title" style="margin:18px 0 6px;">בתי ספר (${schools.length}) · ${students.length} תלמידים סה"כ</div>
+      ${schools.length ? schools.map((sc,i)=>`
+        <div class="teacher-row">
+          <div class="teacher-row-top"><b>🏫 ${escHtml(sc.name)}</b><span class="sub">${countFor(sc.name)} תלמידים</span></div>
+          <div class="sub" style="margin-bottom:10px;">🔑 סיסמת מורים: <b style="color:var(--ink);">${escHtml(sc.teacherPassword || (DEFAULT_TEACHER_PASSWORD+" (ברירת מחדל)"))}</b></div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn-secondary" data-admin-act="view" data-i="${i}" style="width:auto; padding:8px 12px; font-size:13px;">👁️ תצוגת מורה</button>
+            <button class="btn-secondary" data-admin-act="pass" data-i="${i}" style="width:auto; padding:8px 12px; font-size:13px;">🔑 שינוי סיסמה</button>
+            <button class="btn-secondary" data-admin-act="del" data-i="${i}" style="width:auto; padding:8px 12px; font-size:13px; border-color:var(--bad); color:var(--bad);">🗑️ מחיקה</button>
+          </div>
+        </div>`).join("") : `<div class="sub">עדיין לא הוגדרו בתי ספר.</div>`}
+      <div class="teacher-row" style="margin-top:14px;">
+        <div class="teacher-row-top"><b>👥 כל התלמידים</b><span class="sub">${students.length} תלמידים</span></div>
+        <button class="btn-secondary" id="admin-view-all" style="width:auto; padding:8px 12px; font-size:13px;">👁️ תצוגת מורה - ללא סינון</button>
+      </div>`;
+
+    $("#admin-add-btn").addEventListener("click", async ()=>{
+      const name = $("#admin-new-school").value.trim();
+      const pass = $("#admin-new-pass").value.trim();
+      if(!name){ toast("כתבו שם בית ספר"); return; }
+      if(schools.some(x=>String(x.name||"").trim() === name)){ toast("בית ספר בשם הזה כבר קיים"); return; }
+      try{
+        await firestoreAddSchool(name, pass);
+        toast(`בית הספר "${name}" נוסף`);
+        populateSchoolSelect();
+        openAdminDashboard();
+      }catch(e){ toast("שגיאה בהוספת בית הספר"); }
+    });
+    $$("[data-admin-act]", body).forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const sc = schools[Number(btn.dataset.i)];
+        const act = btn.dataset.adminAct;
+        if(act === "view"){ adminViewSchool(sc.name); return; }
+        if(act === "pass"){
+          const next = prompt(`סיסמת מורים חדשה עבור ${sc.name} (ריק = ${DEFAULT_TEACHER_PASSWORD}):`, sc.teacherPassword || "");
+          if(next === null) return;
+          try{ await firestoreSetSchool(sc.name, { teacherPassword: next.trim() }); toast("הסיסמה עודכנה"); openAdminDashboard(); }
+          catch(e){ toast("שגיאה בעדכון הסיסמה"); }
+          return;
+        }
+        if(act === "del"){
+          if(!confirm(`למחוק את בית הספר "${sc.name}"? התלמידים ונתוניהם לא יימחקו, אבל בית הספר ייעלם מהרשימה והמורים שלו לא יוכלו להיכנס.`)) return;
+          try{ await firestoreDeleteSchool(sc.name); toast("בית הספר נמחק"); populateSchoolSelect(); openAdminDashboard(); }
+          catch(e){ toast("שגיאה במחיקת בית הספר"); }
+        }
+      });
+    });
+    $("#admin-view-all").addEventListener("click", ()=> adminViewSchool(""));
   }
 
-  // ---------- TEACHER KEY ICON ----------
-  // a single click opens the normal teacher login; 5+ rapid clicks open the
-  // hidden admin flow instead (see promptAdminPasswordThenManageSchools)
-  let keyBtnTapCount = 0, keyBtnTapTimer = null;
-  $("#teacher-key-btn").addEventListener("click", ()=>{
-    keyBtnTapCount++;
-    clearTimeout(keyBtnTapTimer);
-    keyBtnTapTimer = setTimeout(()=>{
-      const count = keyBtnTapCount;
-      keyBtnTapCount = 0;
-      if(count >= 5) promptAdminPasswordThenManageSchools();
-      else promptTeacherPasswordThenOpen();
-    }, 450);
+  // opens the regular teacher dashboard exactly as that school's teacher sees
+  // it (nothing is saved to this device's own teacher settings)
+  function adminViewSchool(school){
+    adminViewing = true;
+    teacherSchool = school;
+    openTeacherDashboard();
+  }
+  $("#teacher-back-btn").addEventListener("click", ()=>{
+    if(adminViewing){ openAdminDashboard(); }
+    else { renderHome(); showView("view-home"); }
   });
 
   function arenaProgressList(){
@@ -2573,21 +2687,19 @@
   function renderTeacherSchoolPanel(){
     const panel = $("#teacher-school-panel");
     if(!panel) return;
+    if(adminViewing){
+      panel.innerHTML = `
+        <div class="teacher-row" style="padding:10px 14px;">
+          <span class="sub">👁️ תצוגת מנהל · בית ספר: <b style="color:var(--ink);">${escHtml(teacherSchool) || "ללא סינון (כל התלמידים)"}</b></span>
+        </div>`;
+      return;
+    }
     panel.innerHTML = `
       <div class="teacher-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px;">
         <span class="sub">🏫 בית ספר: <b style="color:var(--ink);">${teacherSchool || "ללא סינון (כל התלמידים)"}</b></span>
         <button class="btn-secondary" id="teacher-switch-school-btn" style="width:auto; padding:8px 14px; font-size:13px; white-space:nowrap;">החלפה</button>
       </div>`;
-    $("#teacher-switch-school-btn").addEventListener("click", async ()=>{
-      let schools = [];
-      try{ schools = await firestoreListSchools(); }catch(e){}
-      const listText = schools.length ? schools.map(s=>"• "+s.name).join("\n") : "(אין עדיין בתי ספר מוגדרים)";
-      const school = prompt(`בתי ספר קיימים:\n${listText}\n\nהקלידו שם בית ספר (או השאירו ריק לכל התלמידים):`, teacherSchool || "");
-      if(school === null) return;
-      teacherSchool = school.trim();
-      saveTeacherSchool(teacherSchool);
-      openTeacherDashboard();
-    });
+    $("#teacher-switch-school-btn").addEventListener("click", ()=> promptTeacherPasswordThenOpen());
   }
 
   // which direction the game-history list sorts in, per the currently
@@ -3387,7 +3499,7 @@
     $("#name-gate-password").style.display = isTeacher ? "none" : "block";
     $("#name-gate-password-hint").style.display = isTeacher ? "none" : "block";
     $("#name-gate-password-hint").textContent = isTeacher
-      ? "בית הספר קובע אילו תלמידים תראו בדשבורד - בחרו את בית הספר שלכם מהרשימה"
+      ? "בחרו את בית הספר שלכם והקלידו את סיסמת המורים שקיבלתם ממנהל המערכת"
       : "הסיסמה שומרת על ההתקדמות שלכם - אותו שם, סיסמה ובית ספר במכשיר אחר יחברו אתכם לאותה היסטוריה";
     if(isTeacher && teacherSchool) $("#name-gate-school").value = teacherSchool;
     $("#name-gate-msg").textContent = "";
@@ -3401,14 +3513,13 @@
     if(nameGateBusy) return;
     if(nameGateRole === "teacher"){
       const pass = $("#name-gate-input").value.trim();
-      if(pass !== "1234"){
-        $("#name-gate-msg").textContent = "סיסמה שגויה.";
-        return;
-      }
+      const school = $("#name-gate-school").value.trim();
+      nameGateBusy = true;
       $("#name-gate-msg").textContent = "";
-      teacherSchool = $("#name-gate-school").value.trim();
-      saveTeacherSchool(teacherSchool);
-      openTeacherDashboard();
+      const res = await verifyTeacherLogin(school, pass);
+      nameGateBusy = false;
+      if(!res.ok){ $("#name-gate-msg").textContent = res.message; return; }
+      enterTeacherDashboard(school);
       return;
     }
     const name = $("#name-gate-input").value.trim();

@@ -26,8 +26,8 @@ service cloud.firestore {
     // admin-curated list of schools. anyone can read it (so the name-gate's
     // school picker and the teacher login prompt can list it), but adding a
     // new school still requires an authenticated (anonymous) device - the
-    // real gate is the hidden admin code checked in the app itself before
-    // firestoreAddSchool is ever called.
+    // real gate is the admin password checked in the app itself before
+    // the admin dashboard lets the admin add/delete schools and set teacher passwords.
     match /schools/{id} {
       allow read: if true;
       allow write: if request.auth != null;
