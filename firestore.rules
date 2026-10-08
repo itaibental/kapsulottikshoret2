@@ -1,0 +1,36 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // every student record is now reachable from more than one device (a
+    // student can type the same username+password on a different device
+    // and reconnect to their own history), so write can no longer be
+    // restricted to "only the auth uid that matches this doc's id" - any
+    // signed-in (anonymous) device may write, same trust level as /config.
+    // the app itself still checks the student's own chosen password before
+    // letting a device read/merge another doc's history. delete is needed
+    // for the teacher dashboard's "מחיקת תלמיד/ה לצמיתות" button.
+    match /students/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    // shared "lock the game" switch the teacher toggles and every student
+    // reads - same trust level as above (no real teacher-only auth exists
+    // in this app; the teacher password is only a client-side check).
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // admin-curated list of schools. anyone can read it (so the name-gate's
+    // school picker and the teacher login prompt can list it), but adding a
+    // new school still requires an authenticated (anonymous) device - the
+    // real gate is the hidden admin code checked in the app itself before
+    // firestoreAddSchool is ever called.
+    match /schools/{id} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

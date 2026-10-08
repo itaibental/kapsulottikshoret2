@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>קפסולות תקשורת</title>
 <meta name="description" content="למידה בסגנון סטאש: בחרו מושגי תקשורת מתוך אגרון המושגים, עברו על כרטיסי תובנה קצרים וסיימו במבדק זיכרון.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -579,14 +579,16 @@
   }
 </style>
 
+
 </head>
 <body>
 <div class="app" id="app">
 
   <!-- NAME GATE -->
   <div class="view" id="view-name-gate">
+    <button class="icon-btn" id="name-gate-theme-toggle" data-action="toggle-theme" title="מצב יום/לילה" style="position:absolute; top:calc(14px + env(safe-area-inset-top,0px)); left:14px; z-index:5;">🌓</button>
     <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; min-height:100%; padding:32px 24px; text-align:center;">
-      <div class="brand-mark" style="width:64px;height:64px;font-size:22px;margin-bottom:18px;">כה</div>
+      <div class="brand-mark brand-mark-img" style="width:72px;height:72px;margin-bottom:18px;"><img src="logo_drop.png" alt="קפסולות תקשורת"></div>
       <h2 style="margin-bottom:8px;">ברוכים הבאים!</h2>
       <div class="sub" style="margin-bottom:14px;">אני:</div>
       <div class="role-toggle">
@@ -595,8 +597,11 @@
       </div>
       <div class="sub" id="name-gate-question" style="margin-bottom:14px;">לפני שמתחילים, איך קוראים לכם?</div>
       <input id="name-gate-input" type="text" placeholder="השם המלא שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:12px;">
-      <input id="name-gate-password" type="password" placeholder="תמציאו סיסמה לשמירה על החשבון שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:16px;">
-      <div class="sub" id="name-gate-password-hint" style="margin-bottom:10px; font-size:11.5px;">הסיסמה הזו שומרת על ההתקדמות שלכם - אם תכתבו את אותו שם וסיסמה במכשיר אחר, תתחברו לאותה היסטוריה</div>
+      <input id="name-gate-password" type="password" placeholder="תמציאו סיסמה לשמירה על החשבון שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:12px;">
+      <select id="name-gate-school" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:16px;">
+        <option value="">בית ספר: ללא סינון</option>
+      </select>
+      <div class="sub" id="name-gate-password-hint" style="margin-bottom:10px; font-size:11.5px;">הסיסמה שומרת על ההתקדמות שלכם - אותו שם, סיסמה ובית ספר במכשיר אחר יחברו אתכם לאותה היסטוריה</div>
       <div id="name-gate-msg" class="sub" style="margin-bottom:10px; color:#c23b3b;"></div>
       <button class="btn-primary" id="name-gate-submit" style="width:100%; max-width:320px;">התחילו ללמוד</button>
     </div>
@@ -853,6 +858,7 @@
         <div class="sub">התקדמות תלמידים שנרשמו לאפליקציה</div>
       </div>
     </div>
+    <div id="teacher-school-panel" style="padding:0 16px 10px;"></div>
     <div id="teacher-lock-panel" style="padding:0 16px 14px;"></div>
     <div id="teacher-body" style="padding:0 16px 30px;"></div>
   </div>
@@ -1027,6 +1033,21 @@
   }
   let store = loadStore();
 
+  // ---------- teacher school filter: lets a teacher define a school name and
+  // see only the students registered under that same school name (an
+  // "autonomous environment" per school) - purely a soft filter on the
+  // shared students collection, same trust level as the rest of the app.
+  // left empty, the dashboard falls back to showing every student.
+  const TEACHER_SCHOOL_KEY = "tikshoret_teacher_school";
+  let teacherSchool = "";
+  function loadTeacherSchool(){
+    try{ return localStorage.getItem(TEACHER_SCHOOL_KEY) || ""; }catch(e){ return ""; }
+  }
+  function saveTeacherSchool(school){
+    try{ if(school) localStorage.setItem(TEACHER_SCHOOL_KEY, school); else localStorage.removeItem(TEACHER_SCHOOL_KEY); }catch(e){}
+  }
+  teacherSchool = loadTeacherSchool();
+
   // ---------- teacher game lock: cached locally so starting a quiz never
   // blocks on a network call; refreshed on load, on returning to the home
   // screen, and on a timer while the app is open ----------
@@ -1175,6 +1196,15 @@
     if(!res.ok) throw new Error("firestore set failed: "+res.status);
     return res.json();
   }
+  async function firestoreDeleteDoc(uid){
+    if(!authState) await signInAnonymousStudent();
+    const token = await ensureFreshToken();
+    const res = await fetch(`${FB_FIRESTORE_BASE}/students/${uid}`, {
+      method: "DELETE",
+      headers: token ? {Authorization:`Bearer ${token}`} : {}
+    });
+    if(!res.ok) throw new Error("firestore delete failed: "+res.status);
+  }
   async function firestoreListStudents(){
     const res = await fetch(`${FB_FIRESTORE_BASE}/students?pageSize=300`);
     if(!res.ok) throw new Error("firestore list failed: "+res.status);
@@ -1183,12 +1213,38 @@
   }
   // finds an existing student record by username (exact match, trimmed) -
   // lets a student reconnect to their own history from a different device
-  // by typing the same name + password (see resolveStudentLogin)
-  async function firestoreFindStudentByUsername(name){
+  // by typing the same name + password (see resolveStudentLogin). when a
+  // school is given, only a record under that same school counts as a
+  // match, so two different schools can each have their own "דנה".
+  async function firestoreFindStudentByUsername(name, school){
     const target = String(name||"").trim();
     if(!target) return null;
     const students = await firestoreListStudents();
-    return students.find(s => String(s.username||"").trim() === target) || null;
+    return students.find(s => String(s.username||"").trim() === target
+      && (!school || String(s.school||"").trim() === String(school||"").trim())) || null;
+  }
+
+  // ---------- school environments (admin-managed list; teachers and
+  // students pick from this list rather than typing a free-text name, so
+  // the dashboard filter always matches exactly) ----------
+  async function firestoreListSchools(){
+    const res = await fetch(`${FB_FIRESTORE_BASE}/schools?pageSize=200`);
+    if(!res.ok) throw new Error("firestore list schools failed: "+res.status);
+    const data = await res.json();
+    return (data.documents||[]).map(d=>Object.assign({id:d.name.split("/").pop()}, docToObject(d)));
+  }
+  async function firestoreAddSchool(name){
+    if(!authState) await signInAnonymousStudent();
+    const token = await ensureFreshToken();
+    const clean = String(name||"").trim();
+    const fields = { name: toFirestoreValue(clean), createdAt: toFirestoreValue(new Date().toISOString()) };
+    const res = await fetch(`${FB_FIRESTORE_BASE}/schools/${encodeURIComponent(clean)}?updateMask.fieldPaths=name&updateMask.fieldPaths=createdAt`, {
+      method:"PATCH",
+      headers:Object.assign({"Content-Type":"application/json"}, token?{Authorization:`Bearer ${token}`}:{}),
+      body: JSON.stringify({fields})
+    });
+    if(!res.ok) throw new Error("firestore add school failed: "+res.status);
+    return res.json();
   }
 
   // ---------- teacher game lock (shared config doc every student reads) ----------
@@ -1199,6 +1255,7 @@
     return docToObject(await res.json());
   }
   async function firestoreSetGameLock(locked){
+    if(!authState) await signInAnonymousStudent();
     const token = await ensureFreshToken();
     const obj = { locked, updatedAt: new Date().toISOString() };
     const fields = {}; for(const k in obj) fields[k] = toFirestoreValue(obj[k]);
@@ -1298,11 +1355,11 @@
   // reconnects to their own history from a different device. returns
   // {ok:true} on success (studentDocId is set as a side effect) or
   // {ok:false, message} if the password doesn't match an existing record.
-  async function resolveStudentLogin(name, password){
+  async function resolveStudentLogin(name, password, school){
     let existing = null;
     try{
       if(!authState) await signInAnonymousStudent();
-      existing = await firestoreFindStudentByUsername(name);
+      existing = await firestoreFindStudentByUsername(name, school);
       if(existing){
         const storedPass = existing.password || "";
         if(storedPass && storedPass !== password){
@@ -1323,7 +1380,7 @@
       authState.username = name;
       saveAuthState();
       const payload = {
-        username: name, password,
+        username: name, password, school: school||"",
         learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal,
         streak: store.streak||0, gameHistory: store.gameHistory||[]
       };
@@ -2360,11 +2417,56 @@
     $("#my-scores-modal-backdrop").classList.remove("show");
   });
 
-  // ---------- TEACHER KEY ICON (same password gate as the hidden logo-tap entry) ----------
-  $("#teacher-key-btn").addEventListener("click", ()=>{
+  // asks for the teacher password and lets them pick which school's
+  // students to see (from the admin-managed list), then opens the
+  // dashboard - shared by the key icon and the hidden logo-tap entry point
+  async function promptTeacherPasswordThenOpen(){
     const pass = prompt("סיסמת מורה:");
-    if(pass === "sn1234") openTeacherDashboard();
-    else if(pass !== null) toast("סיסמה שגויה");
+    if(pass === null) return;
+    if(pass !== "1234"){ toast("סיסמה שגויה"); return; }
+    let schools = [];
+    try{ schools = await firestoreListSchools(); }catch(e){}
+    const listText = schools.length ? schools.map(s=>"• "+s.name).join("\n") : "(אין עדיין בתי ספר מוגדרים - יוצגו כל התלמידים)";
+    const school = prompt(`בתי ספר קיימים:\n${listText}\n\nהקלידו את שם בית הספר שלכם בדיוק כפי שמופיע למעלה (או השאירו ריק כדי לראות את כל התלמידים):`, teacherSchool || "");
+    if(school !== null){ teacherSchool = school.trim(); saveTeacherSchool(teacherSchool); }
+    openTeacherDashboard();
+  }
+
+  // hidden admin entry: only someone who knows the admin code can add a new
+  // school environment to the list teachers and students pick from. not
+  // exposed anywhere in the visible UI - reached by rapid-clicking (5+) the
+  // teacher key icon, the same debounced-tap pattern used elsewhere in the
+  // app, instead of a single click (which opens the normal teacher login).
+  async function promptAdminPasswordThenManageSchools(){
+    const code = prompt("קוד גישה:");
+    if(code === null) return;
+    if(code !== "sn1234"){ toast("קוד שגוי"); return; }
+    let schools = [];
+    try{ schools = await firestoreListSchools(); }catch(e){}
+    const listText = schools.length ? schools.map(s=>"• "+s.name).join("\n") : "(אין עדיין בתי ספר)";
+    const newName = prompt(`מצב מנהל - בתי ספר קיימים:\n${listText}\n\nהקלידו שם בית ספר חדש להוספה (השאירו ריק לביטול):`);
+    if(!newName || !newName.trim()) return;
+    try{
+      await firestoreAddSchool(newName.trim());
+      toast(`בית הספר "${newName.trim()}" נוסף בהצלחה`);
+    }catch(e){
+      toast("שגיאה בהוספת בית הספר");
+    }
+  }
+
+  // ---------- TEACHER KEY ICON ----------
+  // a single click opens the normal teacher login; 5+ rapid clicks open the
+  // hidden admin flow instead (see promptAdminPasswordThenManageSchools)
+  let keyBtnTapCount = 0, keyBtnTapTimer = null;
+  $("#teacher-key-btn").addEventListener("click", ()=>{
+    keyBtnTapCount++;
+    clearTimeout(keyBtnTapTimer);
+    keyBtnTapTimer = setTimeout(()=>{
+      const count = keyBtnTapCount;
+      keyBtnTapCount = 0;
+      if(count >= 5) promptAdminPasswordThenManageSchools();
+      else promptTeacherPasswordThenOpen();
+    }, 450);
   });
 
   function arenaProgressList(){
@@ -2381,7 +2483,7 @@
   function renderAccountView(){
     const body = $("#account-body");
     const name = getStudentName() || "תלמיד/ה";
-    $("#account-sub").textContent = "ההתקדמות שלך נשמרת אוטומטית - אין צורך בסיסמה";
+    $("#account-sub").textContent = "ההתקדמות שלך נשמרת אוטומטית בענן, עם השם והסיסמה שבחרתם";
     const rows = arenaProgressList();
     body.innerHTML = `
       <div class="profile-card">
@@ -2419,7 +2521,7 @@
     }
   }
 
-  // ---------- TEACHER DASHBOARD (hidden entry: tap the logo 5x, password sn1234) ----------
+  // ---------- TEACHER DASHBOARD (hidden entry: tap the logo 5x, opens the same teacher-password prompt as the key icon) ----------
   let brandTapCount = 0, brandTapTimer = null;
   $("#brand-mark-tap").addEventListener("click", ()=>{
     brandTapCount++;
@@ -2427,9 +2529,7 @@
     brandTapTimer = setTimeout(()=>{ brandTapCount = 0; }, 1500);
     if(brandTapCount >= 5){
       brandTapCount = 0;
-      const pass = prompt("סיסמת מורה:");
-      if(pass === "sn1234") openTeacherDashboard();
-      else if(pass !== null) toast("סיסמה שגויה");
+      promptTeacherPasswordThenOpen();
     }
   });
   let teacherStudentsCache = [];
@@ -2467,24 +2567,66 @@
     });
   }
 
+  // renders the "which school am I viewing" strip at the top of the
+  // dashboard, with a button to switch it (re-runs the same picker used at
+  // login)
+  function renderTeacherSchoolPanel(){
+    const panel = $("#teacher-school-panel");
+    if(!panel) return;
+    panel.innerHTML = `
+      <div class="teacher-row" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px;">
+        <span class="sub">🏫 בית ספר: <b style="color:var(--ink);">${teacherSchool || "ללא סינון (כל התלמידים)"}</b></span>
+        <button class="btn-secondary" id="teacher-switch-school-btn" style="width:auto; padding:8px 14px; font-size:13px; white-space:nowrap;">החלפה</button>
+      </div>`;
+    $("#teacher-switch-school-btn").addEventListener("click", async ()=>{
+      let schools = [];
+      try{ schools = await firestoreListSchools(); }catch(e){}
+      const listText = schools.length ? schools.map(s=>"• "+s.name).join("\n") : "(אין עדיין בתי ספר מוגדרים)";
+      const school = prompt(`בתי ספר קיימים:\n${listText}\n\nהקלידו שם בית ספר (או השאירו ריק לכל התלמידים):`, teacherSchool || "");
+      if(school === null) return;
+      teacherSchool = school.trim();
+      saveTeacherSchool(teacherSchool);
+      openTeacherDashboard();
+    });
+  }
+
+  // which direction the game-history list sorts in, per the currently
+  // selected student - toggled by the teacher in renderTeacherStudentDetail
+  let teacherHistorySortNewestFirst = true;
+
   async function openTeacherDashboard(){
     showView("view-teacher");
+    renderTeacherSchoolPanel();
     await renderTeacherLockPanel();
     const body = $("#teacher-body");
     body.innerHTML = `<div class="sub">טוען נתוני תלמידים...</div>`;
     try{
-      const students = await firestoreListStudents();
+      let students = await firestoreListStudents();
+      if(teacherSchool){
+        students = students.filter(s => String(s.school||"").trim() === teacherSchool);
+      }
+      // starred students first, then alphabetically by name - this is the
+      // "sort by student name" the teacher asked for
+      students.sort((a,b)=>{
+        const sa = a.starred ? 0 : 1, sb = b.starred ? 0 : 1;
+        if(sa !== sb) return sa - sb;
+        return String(a.username||"").localeCompare(String(b.username||""), "he");
+      });
       teacherStudentsCache = students;
-      if(!students.length){ body.innerHTML = `<div class="sub">עדיין אין תלמידים רשומים עם חשבון.</div>`; return; }
+      if(!students.length){
+        body.innerHTML = `<div class="sub">${teacherSchool ? `אין עדיין תלמידים רשומים בבית הספר "${teacherSchool}".` : "עדיין אין תלמידים רשומים עם חשבון."}</div>`;
+        return;
+      }
       body.innerHTML = `
-        <div class="sub" style="margin-bottom:10px;">${students.length} תלמידים רשומים · בחרו תלמיד כדי לראות את התוצאות שלו</div>
+        <div class="sub" style="margin-bottom:10px;">${students.length} תלמידים · ממוינים לפי שם (מועדפים קודם) · בחרו תלמיד כדי לראות את התוצאות שלו</div>
         <select id="teacher-student-select" style="width:100%; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; margin-bottom:16px;">
           <option value="">— בחרו תלמיד —</option>
-          ${students.map((s,i)=>`<option value="${i}">👤 ${s.username||"(ללא שם)"}</option>`).join("")}
+          ${students.map((s,i)=>`<option value="${i}">${s.starred ? "⭐ " : "👤 "}${s.username||"(ללא שם)"}</option>`).join("")}
         </select>
         <div id="teacher-student-detail"></div>`;
       $("#teacher-student-select").addEventListener("change", (e)=>{
         const idx = e.target.value;
+        teacherHistorySortNewestFirst = true;
         renderTeacherStudentDetail(idx === "" ? null : teacherStudentsCache[Number(idx)]);
       });
     }catch(e){
@@ -2504,8 +2646,11 @@
       const done = terms.filter(t=>learned[t.id]).length;
       return `<span style="display:inline-block; margin-inline-end:10px; font-size:12px; color:var(--ink-soft);">${a.emoji} ${done}/${terms.length}</span>`;
     }).join("");
-    const history = (s.gameHistory||[]).slice().reverse();
     const games = s.gameHistory||[];
+    const history = games.slice().sort((a,b)=>{
+      const da = new Date(a.date).getTime()||0, db = new Date(b.date).getTime()||0;
+      return teacherHistorySortNewestFirst ? db-da : da-db;
+    });
     const avgScore = games.length ? Math.round(games.reduce((sum,h)=>sum+(h.score||0),0)/games.length) : null;
     const bestScore = games.length ? Math.max(...games.map(h=>h.score||0)) : null;
     const historyHtml = history.length ? history.map(h=>{
@@ -2528,8 +2673,15 @@
     }).join("");
     detail.innerHTML = `
       <div class="teacher-row">
-        <div class="teacher-row-top"><b>👤 ${s.username||"(ללא שם)"}</b><span class="sub">${learnedCount}/${TERMS.length} מושגים · ציון אחרון: ${s.lastScore!=null ? (s.lastScore+"/"+s.lastTotal) : "–"}</span></div>
-        <div class="sub" style="margin-bottom:8px;">🔑 סיסמה: <b style="color:var(--ink);">${s.password || "(לא הוגדרה סיסמה)"}</b></div>
+        <div class="teacher-row-top">
+          <b>👤 ${s.username||"(ללא שם)"}</b>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="sub">${learnedCount}/${TERMS.length} מושגים · ציון אחרון: ${s.lastScore!=null ? (s.lastScore+"/"+s.lastTotal) : "–"}</span>
+            <button class="icon-btn" id="teacher-star-btn" title="סימון כמועדף" style="width:34px;height:34px;font-size:18px;">${s.starred ? "⭐" : "☆"}</button>
+          </div>
+        </div>
+        <div class="sub" style="margin-bottom:4px;">🔑 סיסמה: <b style="color:var(--ink);">${s.password || "(לא הוגדרה סיסמה)"}</b></div>
+        ${s.school ? `<div class="sub" style="margin-bottom:8px;">🏫 בית ספר: <b style="color:var(--ink);">${s.school}</b></div>` : ""}
         <div>${perArena}</div>
       </div>
 
@@ -2541,14 +2693,70 @@
         <span class="chip">🥇 ציון הטוב ביותר: ${bestScore!=null ? bestScore+" נק'" : "–"}</span>
         <span class="chip">🎮 ${games.length} משחקים הושלמו</span>
       </div>
-      <button class="btn-secondary" id="teacher-export-csv-btn" style="margin-bottom:14px;">📄 הורדת דוח כקובץ CSV</button>
+      <button class="btn-secondary" id="teacher-export-csv-btn" style="margin-bottom:10px;">📄 הורדת דוח כקובץ CSV</button>
       <div style="margin-bottom:18px;">${reportRowsHtml}</div>
 
-      <div class="section-title" style="margin:16px 0 6px;">היסטוריית משחקים</div>
-      ${historyHtml}`;
+      <div class="section-title" style="margin:16px 0 6px; display:flex; align-items:center; justify-content:space-between;">
+        <span>היסטוריית משחקים</span>
+        <button class="btn-secondary" id="teacher-history-sort-btn" style="width:auto; padding:6px 12px; font-size:12px;">${teacherHistorySortNewestFirst ? "⬇️ החדש קודם" : "⬆️ הישן קודם"}</button>
+      </div>
+      ${historyHtml}
+
+      <div class="section-title" style="margin:20px 0 6px; color:var(--bad);">אזור מסוכן</div>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
+        <button class="btn-secondary" id="teacher-reset-data-btn" style="border-color:var(--bad); color:var(--bad);">🗑️ איפוס נתוני התלמיד/ה (שומר על השם והסיסמה)</button>
+        <button class="btn-secondary" id="teacher-delete-user-btn" style="border-color:var(--bad); color:var(--bad);">⛔ מחיקת התלמיד/ה לצמיתות</button>
+      </div>`;
 
     const csvBtn = $("#teacher-export-csv-btn");
     if(csvBtn) csvBtn.addEventListener("click", ()=> exportStudentReportCsv(s, learned, learnCounts));
+
+    $("#teacher-history-sort-btn").addEventListener("click", ()=>{
+      teacherHistorySortNewestFirst = !teacherHistorySortNewestFirst;
+      renderTeacherStudentDetail(s);
+    });
+
+    $("#teacher-star-btn").addEventListener("click", async ()=>{
+      const next = !s.starred;
+      try{
+        await firestoreSetDoc(s.id, { starred: next });
+        s.starred = next;
+        renderTeacherStudentDetail(s);
+        // keep the dropdown's star marker and sort order in sync without a full reload
+        const sel = $("#teacher-student-select");
+        if(sel){
+          const idx = teacherStudentsCache.indexOf(s);
+          if(idx >= 0) sel.options[idx+1].textContent = `${next ? "⭐ " : "👤 "}${s.username||"(ללא שם)"}`;
+        }
+      }catch(e){
+        toast("שגיאה בעדכון הסימון");
+      }
+    });
+
+    $("#teacher-reset-data-btn").addEventListener("click", async ()=>{
+      if(!confirm(`לאפס את כל ההתקדמות, הציונים וההיסטוריה של ${s.username||"התלמיד/ה"}? השם והסיסמה יישמרו.`)) return;
+      try{
+        await firestoreSetDoc(s.id, {
+          learned: {}, learnCounts: {}, lastScore: null, lastTotal: null, streak: 0, gameHistory: []
+        });
+        Object.assign(s, { learned:{}, learnCounts:{}, lastScore:null, lastTotal:null, streak:0, gameHistory:[] });
+        toast("נתוני התלמיד/ה אופסו");
+        renderTeacherStudentDetail(s);
+      }catch(e){
+        toast("שגיאה באיפוס הנתונים");
+      }
+    });
+
+    $("#teacher-delete-user-btn").addEventListener("click", async ()=>{
+      if(!confirm(`למחוק את ${s.username||"התלמיד/ה"} לצמיתות? לא ניתן לשחזר לאחר מכן.`)) return;
+      try{
+        await firestoreDeleteDoc(s.id);
+        toast("התלמיד/ה נמחק/ה");
+        openTeacherDashboard();
+      }catch(e){
+        toast("שגיאה במחיקת התלמיד/ה");
+      }
+    });
   }
 
   // builds and downloads a CSV report for one student: every concept, whether
@@ -3178,6 +3386,10 @@
     $("#name-gate-password").value = "";
     $("#name-gate-password").style.display = isTeacher ? "none" : "block";
     $("#name-gate-password-hint").style.display = isTeacher ? "none" : "block";
+    $("#name-gate-password-hint").textContent = isTeacher
+      ? "בית הספר קובע אילו תלמידים תראו בדשבורד - בחרו את בית הספר שלכם מהרשימה"
+      : "הסיסמה שומרת על ההתקדמות שלכם - אותו שם, סיסמה ובית ספר במכשיר אחר יחברו אתכם לאותה היסטוריה";
+    if(isTeacher && teacherSchool) $("#name-gate-school").value = teacherSchool;
     $("#name-gate-msg").textContent = "";
     $("#name-gate-submit").textContent = isTeacher ? "כניסה לדשבורד מורה" : "התחילו ללמוד";
   }
@@ -3189,16 +3401,19 @@
     if(nameGateBusy) return;
     if(nameGateRole === "teacher"){
       const pass = $("#name-gate-input").value.trim();
-      if(pass !== "sn1234"){
+      if(pass !== "1234"){
         $("#name-gate-msg").textContent = "סיסמה שגויה.";
         return;
       }
       $("#name-gate-msg").textContent = "";
+      teacherSchool = $("#name-gate-school").value.trim();
+      saveTeacherSchool(teacherSchool);
       openTeacherDashboard();
       return;
     }
     const name = $("#name-gate-input").value.trim();
     const password = $("#name-gate-password").value.trim();
+    const school = $("#name-gate-school").value.trim();
     if(!name){
       $("#name-gate-msg").textContent = "כתבו את שמכם המלא כדי להמשיך.";
       return;
@@ -3210,7 +3425,7 @@
     nameGateBusy = true;
     $("#name-gate-msg").textContent = "";
     $("#name-gate-submit").textContent = "בודקים...";
-    const result = await resolveStudentLogin(name, password);
+    const result = await resolveStudentLogin(name, password, school);
     nameGateBusy = false;
     $("#name-gate-submit").textContent = "התחילו ללמוד";
     if(!result.ok){
@@ -3228,6 +3443,27 @@
   $("#name-gate-password").addEventListener("keydown", (e)=>{
     if(e.key === "Enter") submitNameGate();
   });
+
+  // fills the name-gate's school <select> from the admin-managed schools
+  // list; called once at startup. if it can't reach the network yet, the
+  // select just keeps its "ללא סינון" option, and a later attempt by the
+  // teacher/student can still type via the role switch (which re-triggers
+  // nothing extra - the list simply stays short, not a hard failure)
+  async function populateSchoolSelect(){
+    const sel = $("#name-gate-school");
+    if(!sel) return;
+    try{
+      const schools = await firestoreListSchools();
+      const current = sel.value;
+      sel.innerHTML = `<option value="">בית ספר: ללא סינון</option>` +
+        schools.map(s=>`<option value="${s.name}">${s.name}</option>`).join("");
+      if(current) sel.value = current;
+      else if(teacherSchool) sel.value = teacherSchool;
+    }catch(e){
+      // offline/blocked - keep the default "no filter" option only
+    }
+  }
+  populateSchoolSelect();
 
   // ---------- init ----------
   if(!getStudentName()){
