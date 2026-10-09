@@ -434,7 +434,14 @@
   #view-quiz{background:var(--surface);}
   .quiz-top{padding: calc(14px + env(safe-area-inset-top,0px)) 16px 6px; transition:background-color .25s ease; border-radius:0 0 18px 18px;}
   .quiz-top.flash-correct{ background-color:rgba(63,185,155,.35); }
-  .quiz-top.flash-wrong{ background-color:rgba(220,50,50,.35); }
+  .quiz-top.flash-wrong{ background-color:rgba(220,38,38,.8); }
+  .red-flash{
+    position:fixed; inset:0; z-index:70; pointer-events:none;
+    background:radial-gradient(circle at center, rgba(220,38,38,.38) 0%, rgba(185,18,18,.62) 100%);
+    box-shadow:inset 0 0 140px 50px rgba(150,0,0,.9);
+    animation:red-flash-fade 1.4s ease-out forwards;
+  }
+  @keyframes red-flash-fade{ 0%{opacity:0;} 8%{opacity:1;} 45%{opacity:.85;} 100%{opacity:0;} }
   .quiz-body{flex:1; padding:10px 20px 20px; display:flex; flex-direction:column;}
   .quiz-game-bar{display:flex; justify-content:space-between; align-items:center; padding:2px 4px 0; gap:10px;}
   .quiz-timer{
@@ -566,6 +573,46 @@
 
   /* ---------- CHALLENGE CTA ---------- */
   .challenge-cta-wrap{padding:16px 20px 0;}
+  /* ---------- levels, badges, reward popups ---------- */
+  .level-strip{margin-top:12px; padding:10px 14px; border-radius:16px; background:var(--shell-bg, rgba(255,255,255,.68)); border:1.5px solid var(--line); cursor:pointer;}
+  .level-top{display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:14px;}
+  .level-top b{font-family:'Frank Ruhl Libre',serif; font-size:16px;}
+  .level-top span{font-size:11.5px; color:var(--ink-soft);}
+  .level-bar{height:9px; border-radius:6px; background:var(--line); overflow:hidden; margin-top:7px;}
+  .level-bar i{display:block; height:100%; width:0%; border-radius:6px; background:linear-gradient(90deg,#f5a623,#cf4520); transition:width .6s ease;}
+  .badge-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:8px 0 14px;}
+  .badge-tile{padding:10px 6px; border-radius:14px; border:1.5px solid var(--line); text-align:center; font-size:11.5px; line-height:1.35; background:var(--surface); opacity:.5; filter:grayscale(1);}
+  .badge-tile.earned{opacity:1; filter:none; border-color:#f5a623; background:color-mix(in srgb, #f5a623 12%, var(--surface));}
+  .badge-tile .be{font-size:26px; display:block; margin-bottom:3px;}
+  .reward-pop{
+    position:fixed; left:50%; top:16%; transform:translateX(-50%); z-index:95; pointer-events:none;
+    padding:14px 22px; border-radius:20px; text-align:center; font-weight:700; font-size:16px; line-height:1.5;
+    background:linear-gradient(135deg,#ffd23d,#ff8a3d); color:#3a2200; box-shadow:0 12px 40px rgba(0,0,0,.4);
+    animation:reward-pop-anim 2.4s ease forwards; max-width:86%;
+  }
+  @keyframes reward-pop-anim{ 0%{opacity:0; transform:translateX(-50%) scale(.6);} 12%{opacity:1; transform:translateX(-50%) scale(1.08);} 20%{transform:translateX(-50%) scale(1);} 85%{opacity:1;} 100%{opacity:0; transform:translateX(-50%) translateY(-18px) scale(.95);} }
+  /* ---------- journalism ethics area ---------- */
+  .eth-stage{display:flex; gap:12px; align-items:center; padding:16px; border-radius:18px; border:1.5px solid var(--line); background:var(--surface); margin-bottom:12px;}
+  .eth-stage .eth-num{flex:none; width:44px; height:44px; border-radius:50%; background:#1f6f5c; color:#f2fbf8; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:18px;}
+  .eth-stage-text{flex:1;}
+  .eth-stage-text b{display:block; font-size:16px; margin-bottom:2px;}
+  .eth-example{margin-top:12px; padding:12px 14px; border-radius:14px; background:color-mix(in srgb, #1f6f5c 12%, var(--surface)); font-size:14.5px; line-height:1.55; font-family:'Rubik',system-ui,sans-serif;}
+  .eth-scenario{padding:18px; border-radius:20px; border:1.5px solid #f5a623; background:linear-gradient(165deg, color-mix(in srgb, #f5a623 12%, var(--surface)), var(--surface) 60%); font-size:17px; line-height:1.65; font-weight:500; font-family:'Rubik',system-ui,sans-serif; margin-bottom:14px;}
+  .eth-principle-tag{display:inline-flex; align-items:center; gap:6px; background:var(--surface-2); padding:5px 12px; border-radius:999px; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:10px;}
+  .eth-ask{font-weight:800; margin:6px 0 10px; font-size:15px;}
+  .eth-opt{display:block; width:100%; text-align:right; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; font-weight:600; margin-bottom:10px; line-height:1.55; font-family:'Rubik',system-ui,sans-serif;}
+  .eth-opt:disabled{opacity:.55;}
+  .eth-opt.chosen{opacity:1; border-color:var(--accent); box-shadow:0 0 0 2px color-mix(in srgb, var(--accent) 30%, transparent);}
+  .eth-result{padding:16px; border-radius:16px; border:1.5px solid var(--line); margin:6px 0 12px; line-height:1.65; font-size:15px; font-family:'Rubik',system-ui,sans-serif;}
+  .eth-result.tone-good{border-color:#1a8a4a; background:color-mix(in srgb, #1a8a4a 11%, var(--surface));}
+  .eth-result.tone-mixed{border-color:#f5a623; background:color-mix(in srgb, #f5a623 13%, var(--surface));}
+  .eth-result.tone-bad{border-color:#c23b3b; background:color-mix(in srgb, #c23b3b 11%, var(--surface));}
+  .eth-tone-chip{display:inline-block; font-weight:800; font-size:13px; margin-bottom:6px;}
+  .tone-good .eth-tone-chip{color:#1a8a4a;} .tone-mixed .eth-tone-chip{color:#b9720a;} .tone-bad .eth-tone-chip{color:#c23b3b;}
+  .eth-others{margin:0 0 14px; font-size:14px; line-height:1.6;}
+  .eth-others summary{cursor:pointer; font-weight:700; padding:6px 0;}
+  .eth-others .eth-other-item{padding:10px 12px; border-radius:12px; background:var(--surface-2); margin-top:8px;}
+  .eth-principle-note{font-size:13.5px; color:var(--ink-soft); margin:0 0 14px; line-height:1.55;}
   #challenge-cta{background:var(--accent-2); color:var(--accent-2-ink); box-shadow:var(--shadow);}
 
   /* ---------- CONFETTI ---------- */
@@ -600,7 +647,7 @@
       <input id="name-gate-input" type="text" placeholder="השם המלא שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:12px;">
       <input id="name-gate-password" type="password" placeholder="תמציאו סיסמה לשמירה על החשבון שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:12px;">
       <select id="name-gate-school" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:16px;">
-        <option value="">בית ספר: ללא סינון</option>
+        <option value="">בחרו את בית הספר שלכם</option>
       </select>
       <div class="sub" id="name-gate-password-hint" style="margin-bottom:10px; font-size:11.5px;">הסיסמה שומרת על ההתקדמות שלכם - אותו שם, סיסמה ובית ספר במכשיר אחר יחברו אתכם לאותה היסטוריה</div>
       <div id="name-gate-msg" class="sub" style="margin-bottom:10px; color:#c23b3b;"></div>
@@ -629,6 +676,10 @@
         <div class="stat-pill"><b id="stat-quiz">–</b><span>ציון מבדק אחרון</span></div>
         <div class="stat-pill"><b id="stat-streak">0</b><span>רצף פעילות</span></div>
       </div>
+      <div class="level-strip" id="level-strip" title="הרמה והתגים שלי">
+        <div class="level-top"><b id="level-name">🌱 מתלמד/ת</b><span id="level-xp"></span></div>
+        <div class="level-bar"><i id="level-bar-fill"></i></div>
+      </div>
       <div class="game-lock-banner" id="game-lock-banner" style="display:none;">🔒 המורה נעל/ה כרגע את המשחק - אפשר להמשיך ללמוד, אבל לא לשחק במבדקים</div>
     </div>
 
@@ -654,6 +705,10 @@
     <div class="challenge-cta-wrap" style="display:flex; gap:10px;">
       <button class="btn-primary" id="challenge-cta" style="flex:1">🎯 אתגר מושגים</button>
       <button class="btn-primary" id="dilemmas-cta" style="flex:1; background:#f5a623; color:#3a2200;">🧭 דיון בדילמות</button>
+    </div>
+
+    <div class="challenge-cta-wrap" style="padding-top:10px;">
+      <button class="btn-primary" id="ethics-cta" style="width:100%; background:#1f6f5c; color:#f2fbf8;">📰 לומדים אתיקה עיתונאית</button>
     </div>
 
     <div id="arena-section">
@@ -876,6 +931,62 @@
     <div id="teacher-body" style="padding:0 16px 30px;"></div>
   </div>
 
+  <!-- JOURNALISM ETHICS: menu -->
+  <div class="view" id="view-ethics-menu">
+    <div class="topbar">
+      <button class="icon-btn" data-action="go-home">›</button>
+      <div style="flex:1">
+        <h2>📰 לומדים אתיקה עיתונאית</h2>
+        <div class="sub">מה מותר, מה אסור, ומה עושים כשהכול מתנגש</div>
+      </div>
+    </div>
+    <div style="padding:6px 16px 28px;">
+      <div class="eth-stage">
+        <div class="eth-num">1</div>
+        <div class="eth-stage-text"><b>עקרונות האתיקה <span id="ethics-stage1-done"></span></b><span class="sub" id="ethics-stage1-sub"></span></div>
+      </div>
+      <button class="btn-primary" id="ethics-start-learn" style="width:100%; margin-bottom:22px;">📚 התחילו ללמוד את העקרונות</button>
+      <div class="eth-stage">
+        <div class="eth-num">2</div>
+        <div class="eth-stage-text"><b>דילמות של עיתונאים</b><span class="sub" id="ethics-stage2-sub"></span></div>
+      </div>
+      <button class="btn-primary" id="ethics-start-play" style="width:100%; background:#f5a623; color:#3a2200;">🧭 התחילו סיבוב דילמות</button>
+    </div>
+  </div>
+
+  <!-- JOURNALISM ETHICS: stage 1 (learning cards) -->
+  <div class="view" id="view-ethics-learn">
+    <div class="story-bars" id="ethics-story-bars"></div>
+    <div class="study-top">
+      <button class="icon-btn" id="ethics-learn-exit">✕</button>
+      <div class="study-meta">
+        <b>📰 עקרונות האתיקה העיתונאית</b>
+        <span id="ethics-learn-progress">עיקרון 1</span>
+      </div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="study-stage">
+      <div class="card-zone" id="ethics-card-zone"></div>
+    </div>
+    <div class="study-nav">
+      <button class="nav-round" id="ethics-prev">‹</button>
+      <button class="nav-round primary" id="ethics-next">›</button>
+    </div>
+  </div>
+
+  <!-- JOURNALISM ETHICS: stage 2 (dilemmas) -->
+  <div class="view" id="view-ethics-play">
+    <div class="story-bars" id="ethics-play-bars"></div>
+    <div class="topbar" style="padding-top:12px;">
+      <button class="icon-btn" id="ethics-play-exit">✕</button>
+      <div style="flex:1">
+        <h2>🧭 דילמות אתיקה</h2>
+        <div class="sub" id="ethics-play-progress"></div>
+      </div>
+    </div>
+    <div id="ethics-play-body" style="padding:6px 16px 30px;"></div>
+  </div>
+
   <!-- STUDY -->
   <div class="view" id="view-study">
     <div class="story-bars" id="story-bars"></div>
@@ -910,6 +1021,7 @@
         <div class="rules-row"><span class="rules-emoji">✅</span><span>תשובה <b>נכונה</b> = <b>10+</b> נקודות</span></div>
         <div class="rules-row"><span class="rules-emoji">❌</span><span>תשובה <b>שגויה</b> = <b>10-</b> נקודות</span></div>
         <div class="rules-row"><span class="rules-emoji">⏱️</span><span>לכל שאלה <b>7 שניות</b> לפחות — אי אפשר לעבור הלאה לפני שהזמן נגמר</span></div>
+        <div class="rules-row" id="rules-repeat-row" style="display:none;"><span class="rules-emoji">🔁</span><span id="rules-repeat-text"></span></div>
         <div class="rules-row"><span class="rules-emoji">🏁</span><span>בסוף המבדק יוצג <b>הניקוד הסופי</b> שלכם</span></div>
       </div>
       <button class="btn-primary" id="quiz-rules-start-btn" data-action="start-quiz-rules" style="width:100%; margin-top:22px;">מתחילים! 🚀</button>
@@ -995,6 +1107,7 @@
 <script src="data_z8.js"></script>
 <script src="data_z9.js"></script>
 <script src="data_dilemmas.js"></script>
+<script src="data_ethics.js"></script>
 <script>
 (function(){
   "use strict";
@@ -1370,7 +1483,7 @@
       await firestoreSetDoc(studentDocId, {
         username: name,
         learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal,
-        streak: store.streak||0, gameHistory: store.gameHistory||[]
+        streak: store.streak||0, gameHistory: store.gameHistory||[], xp: store.xp||0, badges: store.badges||{}
       });
     }catch(e){
       // offline or the preview environment blocks external network calls - that's fine,
@@ -1399,6 +1512,8 @@
         if(existing.lastScore != null) store.lastScore = existing.lastScore;
         if(existing.lastTotal != null) store.lastTotal = existing.lastTotal;
         if(existing.streak != null) store.streak = existing.streak;
+        store.xp = Math.max(store.xp||0, existing.xp||0);
+        store.badges = Object.assign({}, store.badges||{}, existing.badges||{});
         store.gameHistory = existing.gameHistory || [];
         saveStore(store);
       } else {
@@ -1410,7 +1525,7 @@
       const payload = {
         username: name, password, school: school||"",
         learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal,
-        streak: store.streak||0, gameHistory: store.gameHistory||[]
+        streak: store.streak||0, gameHistory: store.gameHistory||[], xp: store.xp||0, badges: store.badges||{}
       };
       if(!existing) payload.createdAt = new Date().toISOString();
       await firestoreSetDoc(studentDocId, payload);
@@ -1433,7 +1548,7 @@
     const id = studentDocId || authState.uid;
     cloudSyncTimer = setTimeout(()=>{
       firestoreSetDoc(id, {
-        learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal, streak: store.streak||0
+        learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal, streak: store.streak||0, xp: store.xp||0, badges: store.badges||{}
       }).catch(()=>{});
     }, 800);
   }
@@ -1681,6 +1796,76 @@
       a.play().catch(()=>{});
     }catch(e){}
   }
+  // applause: ~2.2s of overlapping noise "claps" (band-passed noise bursts at
+  // random times, denser in the middle) - synthesized, no audio file needed
+  function playApplause(){
+    const ctx = getAudioCtx();
+    if(!ctx) return;
+    try{
+      const len = Math.floor(ctx.sampleRate * 0.12);
+      const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 3);
+      const total = 2.2, claps = 70;
+      for(let i=0;i<claps;i++){
+        // bias clap times toward the middle of the window for a swell-and-fade
+        const t = total * (0.5 + (Math.random()+Math.random()+Math.random()-1.5)/3);
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.playbackRate.value = 0.8 + Math.random()*0.7;
+        const bp = ctx.createBiquadFilter();
+        bp.type = "bandpass"; bp.frequency.value = 1200 + Math.random()*2200; bp.Q.value = 0.8;
+        const g = ctx.createGain();
+        g.gain.value = 0.35 + Math.random()*0.5;
+        src.connect(bp); bp.connect(g); g.connect(ctx.destination);
+        src.start(ctx.currentTime + Math.max(0,t));
+      }
+    }catch(e){}
+  }
+  // failure trumpet: a brassy descending "wah-wah-wah-waaah" (sawtooth through
+  // a lowpass filter whose cutoff opens on each note, with vibrato on the last)
+  function playFailTrumpet(){
+    const ctx = getAudioCtx();
+    if(!ctx) return;
+    try{
+      const notes = [ {f:466.16, t:0,    d:0.42}, {f:440.00, t:0.46, d:0.42}, {f:415.30, t:0.92, d:0.42}, {f:392.00, t:1.38, d:1.3, slide:310, vib:true} ];
+      notes.forEach(n=>{
+        const t0 = ctx.currentTime + n.t;
+        const osc = ctx.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(n.f, t0);
+        if(n.slide) osc.frequency.exponentialRampToValueAtTime(n.slide, t0 + n.d);
+        const lp = ctx.createBiquadFilter();
+        lp.type = "lowpass"; lp.Q.value = 6;
+        lp.frequency.setValueAtTime(500, t0);
+        lp.frequency.linearRampToValueAtTime(2200, t0 + 0.12);
+        lp.frequency.exponentialRampToValueAtTime(600, t0 + n.d);
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.linearRampToValueAtTime(0.3, t0 + 0.04);
+        g.gain.setValueAtTime(0.26, t0 + n.d*0.7);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + n.d);
+        osc.connect(lp); lp.connect(g); g.connect(ctx.destination);
+        if(n.vib){
+          const lfo = ctx.createOscillator(), lg = ctx.createGain();
+          lfo.frequency.value = 6; lg.gain.value = 9;
+          lfo.connect(lg); lg.connect(osc.frequency);
+          lfo.start(t0 + 0.3); lfo.stop(t0 + n.d + 0.05);
+        }
+        osc.start(t0); osc.stop(t0 + n.d + 0.05);
+      });
+    }catch(e){}
+  }
+  // full-screen red flash for wrong answers
+  function redFlash(){
+    const el = document.createElement("div");
+    el.className = "red-flash";
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 1500);
+  }
+  // combined feedback used wherever an answer is judged
+  function celebrateCorrect(){ playDing(); playApplause(); confettiBurst(42); }
+  function punishWrong(){ playBuzz(); playFailTrumpet(); redFlash(); }
   function playFanfare(){
     [523.25,659.25,783.99,1046.5].forEach((f,i)=>playTone(f, i*0.11, 0.24, "triangle", 0.16));
   }
@@ -1846,6 +2031,8 @@
     $("#stat-streak").textContent = store.streak||0;
     updateGameLockUI();
     refreshGameLock();
+    updateLevelStrip();
+    checkProgressBadges();
 
     const grid = $("#arena-grid");
     grid.innerHTML = "";
@@ -2268,8 +2455,8 @@
     const isCorrect = opt.cat === "own_gain" || opt.cat === "other_lose";
     opts[idx].classList.add(isCorrect ? "correct" : "wrong");
 
-    if(isCorrect){ sideGameCorrect++; playDing(); confettiBurst(14); }
-    else{ playBuzz(); }
+    if(isCorrect){ sideGameCorrect++; celebrateCorrect(); }
+    else{ punishWrong(); }
 
     const chosenLabel = sideGameSide === "a" ? sideGameDilemma.a.side : sideGameDilemma.b.side;
     const otherLabel = sideGameSide === "a" ? sideGameDilemma.b.side : sideGameDilemma.a.side;
@@ -2375,8 +2562,8 @@
     opts.forEach(o=>{ if(o.dataset.correct === "1") o.classList.add("correct"); });
     if(!isCorrect) clickedBtn.classList.add("wrong");
 
-    if(isCorrect){ playDing(); confettiBurst(30); }
-    else{ playBuzz(); }
+    if(isCorrect){ celebrateCorrect(); confettiBurst(48); }
+    else{ punishWrong(); }
 
     const text = isCorrect
       ? `נכון! הערכים שמתנגשים כאן הם "${scenarioGameCorrectPair[0]}" מול "${scenarioGameCorrectPair[1]}".`
@@ -2423,11 +2610,27 @@
   function renderMyScoresList(){
     const wrap = $("#my-scores-list");
     const hist = (store.gameHistory||[]).slice().reverse();
+    const lv = levelInfo(store.xp||0);
+    const earned = store.badges||{};
+    const badgesHtml = `
+      <div class="teacher-row" style="text-align:center;">
+        <div style="font-size:30px;">${lv.cur.emoji}</div>
+        <b>${lv.cur.name}</b>
+        <div class="sub">${store.xp||0} נק' ניסיון${lv.next ? ` · עוד ${lv.next.min-(store.xp||0)} לרמה "${lv.next.name}"` : ""}</div>
+        <div class="level-bar"><i style="width:${Math.round(lv.pct*100)}%"></i></div>
+      </div>
+      <div class="section-title" style="margin:12px 0 0;">🏅 תגים (${Object.keys(earned).length}/${BADGES.length})</div>
+      <div class="badge-grid">${BADGES.map(b=>{
+        const got = !!earned[b.id];
+        const hide = b.hidden && !got;
+        return `<div class="badge-tile${got?" earned":""}"><span class="be">${hide?"❓":b.emoji}</span><b>${hide?"תג נסתר":b.name}</b><br>${got||hide?"":b.desc}</div>`;
+      }).join("")}</div>
+      <div class="section-title" style="margin:6px 0 6px;">היסטוריית משחקים</div>`;
     if(!hist.length){
-      wrap.innerHTML = `<div class="sub" style="text-align:center; padding:10px 0;">עדיין אין תוצאות - השלימו מבדק כדי לראות אותו כאן!</div>`;
+      wrap.innerHTML = badgesHtml + `<div class="sub" style="text-align:center; padding:10px 0;">עדיין אין תוצאות - השלימו מבדק כדי לראות אותו כאן!</div>`;
       return;
     }
-    wrap.innerHTML = hist.map(h=>{
+    wrap.innerHTML = badgesHtml + hist.map(h=>{
       const d = new Date(h.date);
       const dateStr = isNaN(d) ? "" : d.toLocaleDateString("he-IL") + " " + d.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"});
       return `<div class="teacher-row">
@@ -2812,6 +3015,8 @@
         <span class="chip">📊 ציון ממוצע במשחקים: ${avgScore!=null ? avgScore+" נק'" : "–"}</span>
         <span class="chip">🥇 ציון הטוב ביותר: ${bestScore!=null ? bestScore+" נק'" : "–"}</span>
         <span class="chip">🎮 ${games.length} משחקים הושלמו</span>
+        <span class="chip">${levelInfo(s.xp||0).cur.emoji} רמה: ${levelInfo(s.xp||0).cur.name} (${s.xp||0} נק')</span>
+        <span class="chip">🏅 ${Object.keys(s.badges||{}).length} תגים</span>
       </div>
       <button class="btn-secondary" id="teacher-export-csv-btn" style="margin-bottom:10px;">📄 הורדת דוח כקובץ CSV</button>
       <div style="margin-bottom:18px;">${reportRowsHtml}</div>
@@ -2857,9 +3062,9 @@
       if(!confirm(`לאפס את כל ההתקדמות, הציונים וההיסטוריה של ${s.username||"התלמיד/ה"}? השם והסיסמה יישמרו.`)) return;
       try{
         await firestoreSetDoc(s.id, {
-          learned: {}, learnCounts: {}, lastScore: null, lastTotal: null, streak: 0, gameHistory: []
+          learned: {}, learnCounts: {}, lastScore: null, lastTotal: null, streak: 0, gameHistory: [], xp: 0, badges: {}
         });
-        Object.assign(s, { learned:{}, learnCounts:{}, lastScore:null, lastTotal:null, streak:0, gameHistory:[] });
+        Object.assign(s, { learned:{}, learnCounts:{}, lastScore:null, lastTotal:null, streak:0, gameHistory:[], xp:0, badges:{} });
         toast("נתוני התלמיד/ה אופסו");
         renderTeacherStudentDetail(s);
       }catch(e){
@@ -3030,6 +3235,7 @@
       store.learnCounts[d.termId] = (store.learnCounts[d.termId]||0) + 1;
       saveStore(store);
       try{ scheduleCloudSync(); }catch(e){}
+      checkProgressBadges();
     }
   }
 
@@ -3193,6 +3399,16 @@
   // shows the game rules screen, and only starts the 3-2-1 countdown (then proceedFn)
   // once the student taps "מתחילים!" - the score starts below zero when this is
   // a repeat attempt at the same quiz (see retryPenaltyTotal)
+  // identifies "the same quiz": same mode + same dilemma / same set of concepts
+  function currentQuizKey(){
+    if(quizMode === "dilemma" && currentDilemma) return "dilemma:" + currentDilemma.id;
+    const ids = Array.from(new Set(quizQueue.map(x=>x.termId))).sort();
+    return quizMode + ":" + ids.join(",");
+  }
+  function previousAttemptsAtCurrentQuiz(){
+    const key = currentQuizKey();
+    return (store.gameHistory||[]).filter(h=>h.quizKey === key).length;
+  }
   function showQuizRulesThenProceed(proceedFn){
     if(gameLocked){
       toast("המשחק נעול כרגע על ידי המורה 🔒");
@@ -3200,7 +3416,18 @@
       showView("view-home");
       return;
     }
+    // the repeat penalty comes from the student's saved game history (not
+    // just the in-session retry button), so replaying the same quiz later -
+    // from the home screen, after a reload, or on another device - still
+    // costs 10 points per earlier attempt
+    retryPenaltyTotal = 10 * previousAttemptsAtCurrentQuiz();
+    comboStreak = 0;
     quizScore = -retryPenaltyTotal;
+    const repeatRow = $("#rules-repeat-row");
+    if(repeatRow){
+      repeatRow.style.display = retryPenaltyTotal > 0 ? "flex" : "none";
+      $("#rules-repeat-text").innerHTML = `זה ניסיון חוזר באותו מבדק - <b>${retryPenaltyTotal}-</b> נקודות כבר בהתחלה`;
+    }
     pendingQuizStartFn = ()=>{ proceedFn(); startQuizAudio(); };
     showView("view-quiz-rules");
   }
@@ -3351,17 +3578,17 @@
 
     quizScore += isCorrect ? 10 : -10;
     updateLiveScoreDisplay();
+    rewardForAnswer(isCorrect);
 
     const topBar = $("#quiz-top-bar");
     if(topBar){
       const flashClass = isCorrect ? "flash-correct" : "flash-wrong";
       topBar.classList.add(flashClass);
-      setTimeout(()=> topBar.classList.remove(flashClass), 700);
+      setTimeout(()=> topBar.classList.remove(flashClass), isCorrect ? 700 : 1300);
     }
 
     if(isCorrect){
-      playDing();
-      confettiBurst(14);
+      celebrateCorrect();
       if(quizMode === "challenge"){
         challengeStreak++;
         challengeBestRunStreak = Math.max(challengeBestRunStreak, challengeStreak);
@@ -3369,7 +3596,7 @@
         $("#quiz-mode-label").textContent = `🎯 אתגר מושגים · רצף ${challengeStreak}`;
       }
     } else {
-      playBuzz();
+      punishWrong();
       if(quizMode === "challenge"){
         challengeStreak = 0;
         $("#quiz-mode-label").textContent = `🎯 אתגר מושגים · רצף ${challengeStreak}`;
@@ -3420,6 +3647,7 @@
     const pct = total ? correct/total : 0;
     if(quizMode === "study"){ store.lastScore = correct; store.lastTotal = total; }
     attemptScores.push(quizScore);
+    if(total >= 5 && correct === total) awardBadge("perfect");
 
     const modeLabel = quizMode === "challenge" ? "🎯 אתגר מושגים" : quizMode === "dilemma" ? "🧭 מבדק דילמה" : "🧠 מבדק זיכרון";
     const historyLabel = quizMode === "dilemma" && currentDilemma
@@ -3427,7 +3655,7 @@
       : resultConceptsText();
     store.gameHistory = store.gameHistory || [];
     store.gameHistory.push({
-      mode: quizMode, modeLabel, label: historyLabel,
+      mode: quizMode, modeLabel, label: historyLabel, quizKey: currentQuizKey(),
       score: quizScore, correct, total,
       date: new Date().toISOString()
     });
@@ -3553,6 +3781,14 @@
       $("#name-gate-msg").textContent = "כתבו את שמכם המלא כדי להמשיך.";
       return;
     }
+    if(!school){
+      // the school list may not have loaded yet (slow/offline start) - try once more
+      if($("#name-gate-school").options.length <= 1) await populateSchoolSelect();
+      $("#name-gate-msg").textContent = $("#name-gate-school").options.length <= 1
+        ? "לא נטענה רשימת בתי ספר. בדקו חיבור לאינטרנט או פנו למנהל המערכת."
+        : "חובה לבחור את בית הספר שלכם כדי להמשיך.";
+      return;
+    }
     if(!password || password.length < 4){
       $("#name-gate-msg").textContent = "תמציאו סיסמה של לפחות 4 תווים כדי להמשיך.";
       return;
@@ -3590,7 +3826,7 @@
     try{
       const schools = await firestoreListSchools();
       const current = sel.value;
-      sel.innerHTML = `<option value="">בית ספר: ללא סינון</option>` +
+      sel.innerHTML = `<option value="">בחרו את בית הספר שלכם</option>` +
         schools.map(s=>`<option value="${s.name}">${s.name}</option>`).join("");
       if(current) sel.value = current;
       else if(teacherSchool) sel.value = teacherSchool;
@@ -3599,6 +3835,319 @@
     }
   }
   populateSchoolSelect();
+
+  // ---------- REWARDS: levels (XP), badges, combo bonus, surprise boxes ----------
+  const LEVELS = [
+    { min:0,    emoji:"🌱", name:"מתלמד/ת" },
+    { min:100,  emoji:"📝", name:"כתב/ת" },
+    { min:300,  emoji:"🎙️", name:"כתב/ת בכיר/ה" },
+    { min:600,  emoji:"📰", name:"עורך/ת" },
+    { min:1000, emoji:"🏆", name:"עורך/ת ראשי/ת" },
+    { min:1600, emoji:"👑", name:"אגדת עיתונות" }
+  ];
+  const BADGES = [
+    { id:"first_correct", emoji:"🎯", name:"הצלחה ראשונה", desc:"ענו נכון על שאלה ראשונה" },
+    { id:"combo5",        emoji:"🔥", name:"קומבו 5", desc:"5 תשובות נכונות ברצף" },
+    { id:"combo10",       emoji:"⚡", name:"קומבו 10", desc:"10 ברצף", hidden:true },
+    { id:"perfect",       emoji:"💯", name:"מבדק מושלם", desc:"כל התשובות נכונות במבדק" },
+    { id:"learner10",     emoji:"📚", name:"לומד סקרן", desc:"למדו 10 מושגים" },
+    { id:"learner_all",   emoji:"🧠", name:"אנציקלופדיה", desc:"למדו את כל המושגים" },
+    { id:"streak3",       emoji:"📅", name:"3 ימים ברצף", desc:"נכנסו 3 ימים רצופים" },
+    { id:"streak7",       emoji:"🗓️", name:"שבוע שלם", desc:"נכנסו 7 ימים רצופים" },
+    { id:"surprise",      emoji:"🎁", name:"מזל מתחילים", desc:"קבלו תיבת הפתעה", hidden:true },
+    { id:"ethics_first",  emoji:"📰", name:"עיתונאי/ת מתחיל/ה", desc:"סיימו סיבוב דילמות אתיקה" },
+    { id:"ethics_master", emoji:"🛡️", name:"שומר/ת האתיקה", desc:"8+ הכרעות אתיות בסיבוב", hidden:true }
+  ];
+  const SURPRISE_FACTS = [
+    "העיתון המודפס הראשון בעולם יצא לאור במאה ה־17.",
+    "המילה ״עיתונות״ באה מהמילה ״עת״ - כי היא מדווחת על מה שקורה עכשיו.",
+    "בישראל פועלת מועצת העיתונות, שדנה בתלונות על הפרת כללי האתיקה.",
+    "פייק ניוז מתפשט מהר יותר מחדשות אמיתיות כי הוא מעורר רגש חזק.",
+    "כותרת היא לרוב כל מה שקוראים - ולכן כותרת מטעה יכולה להשפיע על מיליונים."
+  ];
+  let comboStreak = 0;
+
+  function levelInfo(xp){
+    let i = 0;
+    LEVELS.forEach((l,k)=>{ if(xp >= l.min) i = k; });
+    const cur = LEVELS[i], next = LEVELS[i+1] || null;
+    return { i, cur, next, pct: next ? (xp-cur.min)/(next.min-cur.min) : 1 };
+  }
+  function updateLevelStrip(){
+    const lv = levelInfo(store.xp||0);
+    const nm = $("#level-name"); if(!nm) return;
+    nm.textContent = `${lv.cur.emoji} ${lv.cur.name}`;
+    $("#level-xp").textContent = lv.next ? `${store.xp||0} / ${lv.next.min} · עוד ${lv.next.min-(store.xp||0)} לרמה הבאה` : `${store.xp||0} נק' · הרמה הגבוהה ביותר!`;
+    $("#level-bar-fill").style.width = Math.round(lv.pct*100)+"%";
+  }
+  $("#level-strip").addEventListener("click", ()=> $("#my-scores-btn").click());
+
+  // popups are queued so a combo bonus, a surprise box and a badge never overlap
+  const popQueue = []; let popBusy = false;
+  function showRewardPop(html, ms){
+    popQueue.push({ html, ms: ms || 2400 });
+    if(!popBusy) nextPop();
+  }
+  function nextPop(){
+    const item = popQueue.shift();
+    if(!item){ popBusy = false; return; }
+    popBusy = true;
+    const el = document.createElement("div");
+    el.className = "reward-pop";
+    el.style.animationDuration = item.ms+"ms";
+    el.innerHTML = item.html;
+    document.body.appendChild(el);
+    setTimeout(()=>{ el.remove(); nextPop(); }, item.ms);
+  }
+  function syncRewards(){ try{ scheduleCloudSync(); }catch(e){} }
+  function awardXp(n){
+    if(!n) return;
+    const before = levelInfo(store.xp||0).i;
+    store.xp = (store.xp||0) + n;
+    saveStore(store);
+    const after = levelInfo(store.xp);
+    if(after.i > before){
+      showRewardPop(`🎉 עליתם רמה!<br><b>${after.cur.emoji} ${after.cur.name}</b>`, 3000);
+      confettiBurst(80, true); playFanfare();
+    }
+    updateLevelStrip();
+    syncRewards();
+  }
+  function awardBadge(id){
+    store.badges = store.badges || {};
+    if(store.badges[id]) return;
+    const b = BADGES.find(x=>x.id === id);
+    if(!b) return;
+    store.badges[id] = new Date().toISOString();
+    saveStore(store);
+    showRewardPop(`🏅 תג חדש!<br><b>${b.emoji} ${b.name}</b>`, 2800);
+    confettiBurst(36);
+    syncRewards();
+  }
+  function checkProgressBadges(){
+    const learnedCount = Object.keys(store.learned||{}).filter(k=>store.learned[k]).length;
+    if(learnedCount >= 10) awardBadge("learner10");
+    if(learnedCount >= TERMS.length) awardBadge("learner_all");
+    if((store.streak||0) >= 3) awardBadge("streak3");
+    if((store.streak||0) >= 7) awardBadge("streak7");
+  }
+  // called for every judged quiz answer. XP and surprise boxes are earned only
+  // on the first attempt at a quiz (a repeat attempt already costs points, so
+  // it should not become an XP farm); the 5-in-a-row bonus counts toward the
+  // quiz score on every attempt.
+  function rewardForAnswer(isCorrect){
+    if(!isCorrect){ comboStreak = 0; return; }
+    const firstAttempt = retryPenaltyTotal === 0;
+    awardBadge("first_correct");
+    if(firstAttempt) awardXp(10);
+    comboStreak++;
+    if(comboStreak % 5 === 0){
+      quizScore += 5;
+      updateLiveScoreDisplay();
+      if(firstAttempt) awardXp(5);
+      showRewardPop(`🔥 קומבו ${comboStreak}!<br><b>+5 נקודות בונוס</b>`, 2200);
+      if(comboStreak === 5) awardBadge("combo5");
+      if(comboStreak === 10) awardBadge("combo10");
+    }
+    if(firstAttempt && Math.random() < 0.2) openSurpriseBox();
+  }
+  function openSurpriseBox(){
+    const r = Math.random();
+    let points = 0, text;
+    if(r < 0.5){ points = 10; }
+    else if(r < 0.8){ points = 15; }
+    else if(r < 0.92){ points = 25; }
+    if(points){
+      awardXp(points); // level XP only - the quiz score is not affected
+      text = `<b>+${points} נקודות ניסיון!</b>`;
+    } else {
+      awardXp(5);
+      text = `<b>ידעת ש...</b><br><span style="font-weight:500; font-size:14px;">${SURPRISE_FACTS[Math.floor(Math.random()*SURPRISE_FACTS.length)]}</span>`;
+    }
+    showRewardPop(`🎁 תיבת הפתעה!<br>${text}`, 3000);
+    awardBadge("surprise");
+  }
+
+  // ---------- JOURNALISM ETHICS AREA ----------
+  // stage 1: swipeable principle cards. stage 2: a random round of dilemmas
+  // drawn from the full pool (ETHICS_DILEMMAS); after each choice the student
+  // sees the consequences of that choice.
+  const ETHICS_ROUND_SIZE = 10;
+  const ETHICS_TONE = {
+    good:  { label:"✅ מתיישב עם עקרונות האתיקה", points:10 },
+    mixed: { label:"⚖️ פשרה - יש בה יתרונות וחסרונות", points:5 },
+    bad:   { label:"⚠️ פוגע בעקרונות האתיקה", points:0 }
+  };
+  const ethicsById = {}; ETHICS_PRINCIPLES.forEach(x=>ethicsById[x.id]=x);
+  let ethicsCardPos = 0, ethicsFinishing = false;
+  let ethicsRound = null;          // {items, pos, tally, answered}
+  let ethicsSeen = new Set();      // dilemma ids already shown this session, so new rounds feel fresh
+
+  function openEthicsMenu(){
+    $("#ethics-stage1-sub").textContent = `${ETHICS_PRINCIPLES.length} כרטיסיות על העקרונות החשובים של העיתונאי`;
+    $("#ethics-stage1-done").textContent = store.ethicsLearned ? "✓" : "";
+    $("#ethics-stage2-sub").textContent = `${ETHICS_DILEMMAS.length} דילמות במאגר · בכל סיבוב ${ETHICS_ROUND_SIZE} דילמות באקראי`;
+    showView("view-ethics-menu");
+  }
+  $("#ethics-cta").addEventListener("click", openEthicsMenu);
+
+  function startEthicsLearn(){
+    ethicsCardPos = 0;
+    buildStoryBars("ethics-story-bars", ETHICS_PRINCIPLES.length);
+    showView("view-ethics-learn");
+    $("#ethics-card-zone").innerHTML = "";
+    renderEthicsCard(0);
+  }
+  function renderEthicsCard(pos, dir){
+    if(pos < 0 || pos >= ETHICS_PRINCIPLES.length) return;
+    ethicsCardPos = pos;
+    const c = ETHICS_PRINCIPLES[pos];
+    updateStoryBars("ethics-story-bars", pos);
+    $("#ethics-learn-progress").textContent = `עיקרון ${pos+1} מתוך ${ETHICS_PRINCIPLES.length}`;
+    const zone = $("#ethics-card-zone");
+    const old = zone.querySelector(".stash-card");
+    const card = document.createElement("div");
+    card.className = "stash-card neon-frame";
+    card.style.overflowY = "auto";
+    card.style.justifyContent = "flex-start";
+    card.style.gap = "10px";
+    card.innerHTML = `
+      <div class="stash-top-row"><span class="stash-tag">📰 עיקרון ${pos+1}</span></div>
+      <div style="font-size:42px; line-height:1.1;">${c.emoji}</div>
+      <div class="stash-body" style="margin:0; font-size:25px;">${c.title}</div>
+      <div style="font-family:'Rubik',system-ui,sans-serif; font-size:17px; line-height:1.65; font-weight:500;">${c.text}</div>
+      <div class="eth-example">💡 <b>דוגמה:</b> ${c.example}</div>
+      <div class="stash-foot" style="margin-top:auto; padding-top:8px;">
+        <span class="stash-idx">${pos+1} / ${ETHICS_PRINCIPLES.length}</span>
+        <span class="tap-hint">${pos === ETHICS_PRINCIPLES.length-1 ? "הקישו כדי לעבור לדילמות" : "הקישו כדי להמשיך ‹"}</span>
+      </div>`;
+    if(dir==="next"){ card.style.transform = "translateX(-110%)"; }
+    else if(dir==="prev"){ card.style.transform = "translateX(110%)"; }
+    zone.appendChild(card);
+    requestAnimationFrame(()=>{ card.style.transform = "translateX(0)"; });
+    if(old){
+      old.style.transform = dir==="prev" ? "translateX(-110%)" : "translateX(110%)";
+      old.style.opacity = "0";
+      setTimeout(()=>old.remove(), 300);
+    }
+  }
+  function nextEthicsCard(){
+    if(ethicsCardPos < ETHICS_PRINCIPLES.length-1){ renderEthicsCard(ethicsCardPos+1, "next"); return; }
+    if(ethicsFinishing) return;
+    ethicsFinishing = true;
+    store.ethicsLearned = true; saveStore(store);
+    confettiBurst(55); playFanfare();
+    toast("סיימתם את שלב 1! עוברים לדילמות 🎉");
+    setTimeout(()=>{ ethicsFinishing = false; startEthicsPlay(); }, 700);
+  }
+  $("#ethics-next").addEventListener("click", nextEthicsCard);
+  $("#ethics-prev").addEventListener("click", ()=>{ if(ethicsCardPos > 0) renderEthicsCard(ethicsCardPos-1, "prev"); });
+  $("#ethics-card-zone").addEventListener("click", nextEthicsCard);
+  $("#ethics-learn-exit").addEventListener("click", openEthicsMenu);
+  $("#ethics-start-learn").addEventListener("click", startEthicsLearn);
+  $("#ethics-start-play").addEventListener("click", ()=> startEthicsPlay());
+
+  function startEthicsPlay(){
+    if(gameLocked){
+      toast("המשחק נעול כרגע על ידי המורה 🔒");
+      openEthicsMenu();
+      return;
+    }
+    let pool = ETHICS_DILEMMAS.filter(d=>!ethicsSeen.has(d.id));
+    if(pool.length < ETHICS_ROUND_SIZE){ ethicsSeen = new Set(); pool = ETHICS_DILEMMAS.slice(); }
+    const items = shuffle(pool).slice(0, ETHICS_ROUND_SIZE).map(d=>Object.assign({}, d, { options: shuffle(d.options) }));
+    items.forEach(d=>ethicsSeen.add(d.id));
+    ethicsRound = { items, pos:0, tally:{good:0, mixed:0, bad:0}, answered:false };
+    buildStoryBars("ethics-play-bars", items.length);
+    showView("view-ethics-play");
+    renderEthicsQuestion();
+  }
+  function renderEthicsQuestion(){
+    const r = ethicsRound;
+    const d = r.items[r.pos];
+    r.answered = false;
+    updateStoryBars("ethics-play-bars", r.pos);
+    $("#ethics-play-progress").textContent = `דילמה ${r.pos+1} מתוך ${r.items.length}`;
+    const pr = ethicsById[d.p];
+    const body = $("#ethics-play-body");
+    body.innerHTML = `
+      <span class="eth-principle-tag">${pr ? pr.emoji+" "+pr.title : "אתיקה"}</span>
+      <div class="eth-scenario">${d.scenario}</div>
+      <div class="eth-ask">מה ההכרעה שלכם?</div>
+      <div id="eth-options">${d.options.map((o,i)=>`<button class="eth-opt" data-i="${i}">${o.t}</button>`).join("")}</div>
+      <div id="eth-feedback"></div>`;
+    window.scrollTo(0,0);
+    $("#view-ethics-play").scrollTop = 0;
+    $$(".eth-opt", body).forEach(btn=> btn.addEventListener("click", ()=> answerEthics(Number(btn.dataset.i))));
+  }
+  function answerEthics(i){
+    const r = ethicsRound;
+    if(r.answered) return;
+    r.answered = true;
+    const d = r.items[r.pos];
+    const o = d.options[i];
+    r.tally[o.tone]++;
+    $$(".eth-opt").forEach((b,idx)=>{ b.disabled = true; if(idx === i) b.classList.add("chosen"); });
+    if(o.tone === "good"){ playDing(); confettiBurst(24); }
+    awardXp(ETHICS_TONE[o.tone].points);
+    const pr = ethicsById[d.p];
+    const others = d.options.filter((_,idx)=>idx!==i);
+    const last = r.pos === r.items.length-1;
+    $("#eth-feedback").innerHTML = `
+      <div class="eth-result tone-${o.tone}">
+        <span class="eth-tone-chip">${ETHICS_TONE[o.tone].label}</span><br>
+        <b>ההשלכות של ההכרעה שלכם:</b> ${o.r}
+      </div>
+      ${pr ? `<div class="eth-principle-note">🔗 <b>העיקרון הרלוונטי - ${pr.emoji} ${pr.title}:</b> ${pr.text}</div>` : ""}
+      <details class="eth-others">
+        <summary>מה היה קורה בהכרעות האחרות?</summary>
+        ${others.map(x=>`<div class="eth-other-item"><b>${x.t}</b><br><span style="font-weight:700;">${ETHICS_TONE[x.tone].label}</span><br>${x.r}</div>`).join("")}
+      </details>
+      <button class="btn-primary" id="eth-next-btn" style="width:100%;">${last ? "לסיכום הסיבוב 🏁" : "הדילמה הבאה ›"}</button>`;
+    $("#eth-next-btn").addEventListener("click", ()=>{
+      if(last) finishEthicsRound();
+      else { r.pos++; renderEthicsQuestion(); }
+    });
+    const fb = $("#eth-feedback");
+    if(fb && fb.scrollIntoView) fb.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+  function finishEthicsRound(){
+    const r = ethicsRound;
+    const total = r.items.length;
+    const score = r.tally.good*ETHICS_TONE.good.points + r.tally.mixed*ETHICS_TONE.mixed.points;
+    updateStoryBars("ethics-play-bars", total);
+    store.gameHistory = store.gameHistory || [];
+    store.gameHistory.push({
+      mode:"ethics", modeLabel:"📰 אתיקה עיתונאית", label:`${total} דילמות`, quizKey:"ethics",
+      score, correct:r.tally.good, total, date:new Date().toISOString()
+    });
+    if(store.gameHistory.length > 50) store.gameHistory = store.gameHistory.slice(-50);
+    saveStore(store);
+    if(authState){ firestoreSetDoc(studentDocId || authState.uid, { gameHistory: store.gameHistory }).catch(()=>{}); }
+    awardBadge("ethics_first");
+    if(r.tally.good >= 8) awardBadge("ethics_master");
+    const share = r.tally.good/total;
+    const msg = share >= 0.75 ? "שיקול דעת עיתונאי מצוין! 👏" : share >= 0.5 ? "בכיוון הנכון - כדאי לחזור על העקרונות ולנסות שוב" : "כדאי לחזור לכרטיסיות העקרונות ולנסות סיבוב נוסף";
+    if(share >= 0.75){ confettiBurst(90, true); playFanfare(); }
+    $("#ethics-play-progress").textContent = "סיכום הסיבוב";
+    $("#ethics-play-body").innerHTML = `
+      <div class="eth-scenario" style="text-align:center;">
+        <div style="font-size:42px;">${share >= 0.75 ? "🏅" : share >= 0.5 ? "👍" : "📚"}</div>
+        <b style="font-size:19px;">${msg}</b><br>
+        <span class="sub">ניקוד: ${score} מתוך ${total*ETHICS_TONE.good.points}</span>
+      </div>
+      <div class="eth-result tone-good">✅ הכרעות שמתיישבות עם האתיקה: <b>${r.tally.good}</b></div>
+      <div class="eth-result tone-mixed">⚖️ פשרות מורכבות: <b>${r.tally.mixed}</b></div>
+      <div class="eth-result tone-bad">⚠️ הכרעות שפוגעות בעקרונות: <b>${r.tally.bad}</b></div>
+      <button class="btn-primary" id="eth-again-btn" style="width:100%; margin-top:6px;">🔀 סיבוב חדש - דילמות אחרות</button>
+      <button class="btn-secondary" id="eth-review-btn" style="margin-top:10px;">📚 חזרה על העקרונות</button>
+      <button class="btn-secondary" id="eth-menu-btn" style="margin-top:10px;">חזרה לתפריט</button>`;
+    $("#eth-again-btn").addEventListener("click", ()=> startEthicsPlay());
+    $("#eth-review-btn").addEventListener("click", startEthicsLearn);
+    $("#eth-menu-btn").addEventListener("click", openEthicsMenu);
+    $("#view-ethics-play").scrollTop = 0;
+  }
+  $("#ethics-play-exit").addEventListener("click", openEthicsMenu);
 
   // ---------- init ----------
   if(!getStudentName()){
