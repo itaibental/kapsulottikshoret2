@@ -624,6 +624,13 @@
   .ed-result.bad{border-color:#ff1f44; background:color-mix(in srgb, #ff1f44 20%, var(--surface)); box-shadow:0 0 16px rgba(255,31,68,.35);}
   .ed-result.mid{border-color:#ffb000; background:color-mix(in srgb, #ffb000 22%, var(--surface));}
   .ed-line-ok{color:#00a843; font-weight:800;} .ed-line-bad{color:#ff1f44; font-weight:800;}
+  .ed-opt.done{cursor:pointer; position:relative; padding-inline-end:38px;}
+  .ed-opt.done::after{content:"ⓘ"; position:absolute; inset-inline-end:12px; top:50%; transform:translateY(-50%); font-size:17px; opacity:.8;}
+  .ed-modal-bg{position:fixed; inset:0; background:rgba(10,8,25,.62); z-index:9999; display:flex; align-items:center; justify-content:center; padding:18px;}
+  .ed-modal{width:100%; max-width:420px; max-height:84vh; overflow-y:auto; border-radius:22px; background:var(--surface); color:var(--ink); padding:20px; font-family:'Rubik',system-ui,sans-serif; line-height:1.7; font-size:15.5px; border:3px solid var(--mc,#6a3fb5); box-shadow:0 20px 60px rgba(0,0,0,.45);}
+  .ed-modal .ed-m-head{font-size:19px; font-weight:800; margin-bottom:10px;}
+  .ed-modal .ed-m-verdict{display:inline-block; padding:5px 12px; border-radius:999px; font-weight:800; font-size:13.5px; margin-bottom:10px; color:#fff; background:var(--mc,#6a3fb5);}
+  .ed-modal p{margin:0 0 10px;}
   .ed-rules{display:flex; flex-direction:column; gap:14px; margin:6px 0 4px;}
   .ed-rule{display:flex; gap:14px; align-items:center; padding:14px; border-radius:18px; background:var(--surface); border:1.5px solid var(--line); border-inline-start:6px solid var(--rc);}
   .ed-rule .ed-re{flex:none; width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px; background:color-mix(in srgb, var(--rc) 20%, var(--surface));}
@@ -4447,13 +4454,15 @@
     rewardForAnswer(perfect, { firstAttempt: c.seenBefore === 0, addScore: n=>{ r.score += n; } });
     $("#editorial-play-progress").textContent = editorialScoreLine();
     $$("#ed-urgency .ed-opt").forEach(b=>{
-      b.disabled = true;
+      b.classList.add("done");
+      b.addEventListener("click", ()=> showEditorialExplain("u", b.dataset.u, c, r.pickUrgency, picked, correctSet));
       const k = b.dataset.u;
       if(k === c.u) b.classList.add("ok");
       else if(k === r.pickUrgency) b.classList.add("wrong");
     });
     $$("#ed-factors .ed-opt, #ed-nv .ed-opt").forEach(b=>{
-      b.disabled = true;
+      b.classList.add("done");
+      b.addEventListener("click", ()=> showEditorialExplain("f", b.dataset.f, c, r.pickUrgency, picked, correctSet));
       const f = b.dataset.f, isRight = correctSet.includes(f), isPicked = picked.has(f);
       if(isRight && isPicked) b.classList.add("ok");
       else if(isRight) b.classList.add("miss");
@@ -4469,7 +4478,7 @@
         <b>שיקולי עריכה וערך חדשותי:</b> ${factorsExact ? "בחרתם בדיוק את השיקולים הנכונים" : "שיקולי העריכה הנכונים: " + c.c.map(f=>editorialFactorById[f].emoji+" "+editorialFactorById[f].title).join(" · ") + "<br><b>ערך חדשותי שמתקיים:</b> " + (c.v||[]).map(f=>editorialNvById[f].emoji+" "+editorialNvById[f].title).join(" · ")} (${fmt(factorsPts)})<br><br>
         <b>למה?</b> ${c.w}
       </div>
-      <div class="eth-principle-note">🟩 ירוק מלא: נכון ונבחר · 🟩 ירוק מקווקו: נכון ופספסתם · 🟥 אדום: נבחר ולא נכון</div>
+      <div class="eth-principle-note">👆 לחצו על כל תשובה כדי לקבל הסבר: למה צדקתם או למה טעיתם.<br>🟩 ירוק מלא: נכון ונבחר · 🟩 ירוק מקווקו: נכון ופספסתם · 🟥 אדום: נבחר ולא נכון</div>
       <button class="btn-primary" id="ed-next-btn" style="width:100%;">${last ? "לסיכום הסיבוב 🏁" : "המקרה הבא ›"}</button>`;
     gateButtonUntil($("#ed-next-btn"), r.shownAt, last ? "לסיכום הסיבוב 🏁" : "המקרה הבא ›");
     $("#ed-next-btn").addEventListener("click", ()=>{
@@ -4478,6 +4487,57 @@
     });
     const fb = $("#ed-feedback");
     if(fb && fb.scrollIntoView) fb.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+  const EDITORIAL_URGENCY_WHY = {
+    now:"דחיפות מיידית (פלאש או התראה) שמורה למצבים שבהם יש סכנה, הוראות לציבור או חשיבות גדולה בכל דקה, ושיש מקור ודאי.",
+    today:"״היום״ מתאים לידיעה חשובה ואמינה שאין בה סכנה מיידית: בודקים במהירות וכוללים אותה במהדורה הקרובה.",
+    later:"״להמתין״ מתאים כשחסר אימות או השלמה (תגובה, מקור נוסף, אישור רשמי), או כשהידיעה אינה תלויה בזמן ויכולה לחכות לרגע נוח.",
+    never:"״לא לפרסם״ מתאים כשהפרסום בצורה הזאת מטעה, פוגע, מסכן חיים או אסור לפי חוק, גם אם הידיעה מעניינת."
+  };
+  function showEditorialExplain(kind, id, c, pickedU, picked, correctSet){
+    let tone, verdict, title, html;
+    if(kind === "u"){
+      const meta = EDITORIAL_URGENCY[id];
+      title = meta.emoji + " " + meta.label;
+      if(id === c.u){
+        tone = "#00b84a";
+        verdict = pickedU === id ? "✅ צדקתם" : "✅ זו ההחלטה המומלצת";
+        html = `<p>${EDITORIAL_URGENCY_WHY[id]}</p><p><b>במקרה הזה:</b> ${c.w}</p>`;
+      } else if(pickedU === id){
+        tone = "#ff1f44"; verdict = "❌ טעיתם";
+        html = `<p>בחרתם באפשרות הזאת, אבל היא לא מתאימה כאן. ${EDITORIAL_URGENCY_WHY[id]}</p>
+          <p><b>ההחלטה המומלצת:</b> ${EDITORIAL_URGENCY[c.u].emoji} ${EDITORIAL_URGENCY[c.u].label}</p>
+          <p><b>למה:</b> ${c.w}</p>`;
+      } else {
+        tone = "#6a3fb5"; verdict = "ℹ️ למה לא כאן";
+        html = `<p>${EDITORIAL_URGENCY_WHY[id]}</p><p>במקרה הזה זה לא מתאים, כי ההחלטה המומלצת היא ${EDITORIAL_URGENCY[c.u].emoji} <b>${EDITORIAL_URGENCY[c.u].short}</b>.</p><p><b>למה:</b> ${c.w}</p>`;
+      }
+    } else {
+      const f = editorialFactorById[id] || editorialNvById[id];
+      title = f.emoji + " " + f.title;
+      const right = correctSet.includes(id), got = picked.has(id);
+      const rightList = c.c.map(x=>editorialFactorById[x].title).concat((c.v||[]).map(x=>editorialNvById[x].title)).join(", ");
+      if(right && got){
+        tone = "#00b84a"; verdict = "✅ צדקתם";
+        html = `<p>בחרתם נכון - שיקול זה רלוונטי כאן.</p><p><b>מהו השיקול?</b> ${f.text}</p><p><b>במקרה הזה:</b> ${c.w}</p>`;
+      } else if(right){
+        tone = "#00b84a"; verdict = "🟩 פספסתם";
+        html = `<p>זה שיקול נכון שלא סימנתם.</p><p><b>מהו השיקול?</b> ${f.text}</p><p><b>במקרה הזה:</b> ${c.w}</p>`;
+      } else if(got){
+        tone = "#ff1f44"; verdict = "❌ טעיתם";
+        html = `<p>סימנתם שיקול שאינו מכריע בידיעה הזאת.</p><p><b>מהו השיקול?</b> ${f.text}</p><p>הוא חשוב באופן כללי, אבל כאן ההכרעה נשענת על: <b>${rightList}</b>.</p><p><b>למה:</b> ${c.w}</p>`;
+      } else {
+        tone = "#6a3fb5"; verdict = "👍 נכון שלא בחרתם";
+        html = `<p>זה שיקול שאינו מרכזי בידיעה הזאת.</p><p><b>מהו השיקול?</b> ${f.text}</p><p>כאן חשובים יותר: <b>${rightList}</b>.</p>`;
+      }
+    }
+    const bg = document.createElement("div");
+    bg.className = "ed-modal-bg";
+    bg.innerHTML = `<div class="ed-modal" style="--mc:${tone}"><span class="ed-m-verdict">${verdict}</span><div class="ed-m-head">${title}</div>${html}<button class="btn-primary" style="width:100%; margin-top:6px;">הבנתי</button></div>`;
+    const close = ()=> bg.remove();
+    bg.addEventListener("click", e=>{ if(e.target === bg) close(); });
+    bg.querySelector("button").addEventListener("click", close);
+    document.body.appendChild(bg);
   }
   function finishEditorialRound(){
     const r = editorialRound;
