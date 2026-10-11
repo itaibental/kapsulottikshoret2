@@ -1,9 +1,4 @@
-<!doctype html>
-<html lang="he" dir="rtl">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>קפסולות תקשורת</title>
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>קפסולות תקשורת</title>
 <meta name="description" content="למידה בסגנון סטאש: בחרו מושגי תקשורת מתוך אגרון המושגים, עברו על כרטיסי תובנה קצרים וסיימו במבדק זיכרון.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -612,6 +607,16 @@
   .eth-others{margin:0 0 14px; font-size:14px; line-height:1.6;}
   .eth-others summary{cursor:pointer; font-weight:700; padding:6px 0;}
   .eth-others .eth-other-item{padding:10px 12px; border-radius:12px; background:var(--surface-2); margin-top:8px;}
+  .ed-tag{display:inline-flex; align-items:center; gap:6px; background:color-mix(in srgb, #6a3fb5 16%, var(--surface)); padding:5px 12px; border-radius:999px; font-size:12px; font-weight:700; margin-bottom:10px;}
+  .ed-news{padding:18px; border-radius:20px; border:1.5px solid #6a3fb5; background:linear-gradient(165deg, color-mix(in srgb, #6a3fb5 10%, var(--surface)), var(--surface) 60%); margin-bottom:14px; font-family:'Rubik',system-ui,sans-serif;}
+  .ed-news .ed-head{font-size:19px; font-weight:800; line-height:1.4; margin-bottom:8px;}
+  .ed-news .ed-body{font-size:15.5px; line-height:1.65;}
+  .ed-opt{display:block; width:100%; text-align:right; padding:12px 14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:14.5px; font-weight:600; margin-bottom:8px; cursor:pointer; font-family:inherit; line-height:1.4;}
+  .ed-opt.sel{border-color:#6a3fb5; background:color-mix(in srgb, #6a3fb5 14%, var(--surface)); box-shadow:0 0 0 2px color-mix(in srgb, #6a3fb5 28%, transparent);}
+  .ed-opt:disabled{opacity:1; cursor:default;}
+  .ed-opt.ok{border-color:#1a8a4a; background:color-mix(in srgb, #1a8a4a 13%, var(--surface));}
+  .ed-opt.miss{border-color:#f5a623; border-style:dashed; background:color-mix(in srgb, #f5a623 12%, var(--surface));}
+  .ed-opt.wrong{border-color:#c23b3b; background:color-mix(in srgb, #c23b3b 12%, var(--surface));}
   .eth-principle-note{font-size:13.5px; color:var(--ink-soft); margin:0 0 14px; line-height:1.55;}
   #challenge-cta{background:var(--accent-2); color:var(--accent-2-ink); box-shadow:var(--shadow);}
 
@@ -626,10 +631,7 @@
   }
 </style>
 
-
-</head>
-<body>
-<div class="app" id="app">
+</head><body><div class="app" id="app">
 
   <!-- NAME GATE -->
   <div class="view" id="view-name-gate">
@@ -704,11 +706,7 @@
 
     <div class="challenge-cta-wrap" style="display:flex; gap:10px;">
       <button class="btn-primary" id="challenge-cta" style="flex:1">🎯 אתגר מושגים</button>
-      <button class="btn-primary" id="dilemmas-cta" style="flex:1; background:#f5a623; color:#3a2200;">🧭 דיון בדילמות</button>
-    </div>
-
-    <div class="challenge-cta-wrap" style="padding-top:10px;">
-      <button class="btn-primary" id="ethics-cta" style="width:100%; background:#1f6f5c; color:#f2fbf8;">📰 לומדים אתיקה עיתונאית</button>
+      <button class="btn-primary" id="more-games-cta" style="flex:1; background:#6a3fb5; color:#faf6ff;">🎮 משחקים נוספים</button>
     </div>
 
     <div id="arena-section">
@@ -987,6 +985,78 @@
     <div id="ethics-play-body" style="padding:6px 16px 30px;"></div>
   </div>
 
+  <!-- MORE GAMES -->
+  <div class="view" id="view-more-games">
+    <div class="topbar">
+      <button class="icon-btn" data-action="go-home">›</button>
+      <div style="flex:1">
+        <h2>🎮 משחקים נוספים</h2>
+        <div class="sub">דילמות, אתיקה ושיקולי עריכה</div>
+      </div>
+    </div>
+    <div style="padding:10px 16px 28px; display:flex; flex-direction:column; gap:12px;">
+      <button class="btn-primary" id="dilemmas-cta" style="width:100%; background:#f5a623; color:#3a2200;">🧭 דיון בדילמות</button>
+      <button class="btn-primary" id="ethics-cta" style="width:100%; background:#1f6f5c; color:#f2fbf8;">📰 לומדים אתיקה עיתונאית</button>
+      <button class="btn-primary" id="editorial-cta" style="width:100%; background:#6a3fb5; color:#faf6ff;">✂️ שיקולי עריכה</button>
+    </div>
+  </div>
+
+  <!-- EDITORIAL: menu -->
+  <div class="view" id="view-editorial-menu">
+    <div class="topbar">
+      <button class="icon-btn" data-action="go-home">›</button>
+      <div style="flex:1">
+        <h2>✂️ שיקולי עריכה</h2>
+        <div class="sub">מתי מפרסמים, כמה מהר, ולמה</div>
+      </div>
+    </div>
+    <div style="padding:6px 16px 28px;">
+      <div class="eth-stage">
+        <div class="eth-num" style="background:#6a3fb5;">1</div>
+        <div class="eth-stage-text"><b>כללי המשחק ושיקולי העריכה <span id="editorial-stage1-done"></span></b><span class="sub" id="editorial-stage1-sub"></span></div>
+      </div>
+      <button class="btn-primary" id="editorial-start-learn" style="width:100%; margin-bottom:22px; background:#6a3fb5; color:#faf6ff;">📚 התחילו ללמוד את הכללים</button>
+      <div class="eth-stage">
+        <div class="eth-num" style="background:#6a3fb5;">2</div>
+        <div class="eth-stage-text"><b>חדר העריכה</b><span class="sub" id="editorial-stage2-sub"></span></div>
+      </div>
+      <button class="btn-primary" id="editorial-start-play" style="width:100%; background:#f5a623; color:#3a2200;">✂️ התחילו סיבוב עריכה</button>
+    </div>
+  </div>
+
+  <!-- EDITORIAL: stage 1 (rule + factor cards) -->
+  <div class="view" id="view-editorial-learn">
+    <div class="story-bars" id="editorial-story-bars"></div>
+    <div class="study-top">
+      <button class="icon-btn" id="editorial-learn-exit">✕</button>
+      <div class="study-meta">
+        <b>✂️ שיקולי עריכה</b>
+        <span id="editorial-learn-progress">כרטיס 1</span>
+      </div>
+      <div style="width:40px;"></div>
+    </div>
+    <div class="study-stage">
+      <div class="card-zone" id="editorial-card-zone"></div>
+    </div>
+    <div class="study-nav">
+      <button class="nav-round" id="editorial-prev">‹</button>
+      <button class="nav-round primary" id="editorial-next">›</button>
+    </div>
+  </div>
+
+  <!-- EDITORIAL: stage 2 (cases) -->
+  <div class="view" id="view-editorial-play">
+    <div class="story-bars" id="editorial-play-bars"></div>
+    <div class="topbar" style="padding-top:12px;">
+      <button class="icon-btn" id="editorial-play-exit">✕</button>
+      <div style="flex:1">
+        <h2>✂️ חדר העריכה</h2>
+        <div class="sub" id="editorial-play-progress"></div>
+      </div>
+    </div>
+    <div id="editorial-play-body" style="padding:6px 16px 30px;"></div>
+  </div>
+
   <!-- STUDY -->
   <div class="view" id="view-study">
     <div class="story-bars" id="story-bars"></div>
@@ -1108,6 +1178,7 @@
 <script src="data_z9.js"></script>
 <script src="data_dilemmas.js"></script>
 <script src="data_ethics.js"></script>
+<script src="data_editorial.js"></script>
 <script>
 (function(){
   "use strict";
@@ -2120,6 +2191,7 @@
     });
   }
   $("#challenge-cta").addEventListener("click", openChallengePicker);
+  $("#more-games-cta").addEventListener("click", ()=> showView("view-more-games"));
   $("#start-challenge-btn").addEventListener("click", ()=>{
     if(!challengeSelected.size) return;
     startChallenge(Array.from(challengeSelected));
@@ -2942,16 +3014,18 @@
       return `<div class="teacher-row">
         <div class="teacher-row-top"><b>${h.modeLabel||"מבדק"}</b><span class="sub">🏆 ${h.score} נק'</span></div>
         <div class="sub">${h.label||""}</div>
-        <div class="sub">${h.correct}/${h.total} ${h.mode==="ethics" ? "הכרעות מתיישבות עם האתיקה" : "נכונות"} · ${dateStr}</div>
+        <div class="sub">${h.correct}/${h.total} ${h.mode==="ethics" ? "הכרעות מתיישבות עם האתיקה" : h.mode==="editorial" ? "מקרים נכונים לגמרי" : "נכונות"} · ${dateStr}</div>
       </div>`;
     };
     const section = (list, emptyText)=> list.length ? sortGames(list).map(gameRowHtml).join("") : `<div class="sub">${emptyText}</div>`;
     const conceptGames = games.filter(h=>h.mode==="study"||h.mode==="challenge"||!h.mode);
     const dilemmaGames = games.filter(h=>h.mode==="dilemma"||h.mode==="sidegame");
     const ethicsGames = games.filter(h=>h.mode==="ethics");
+    const editorialGames = games.filter(h=>h.mode==="editorial");
     const historyHtml = section(conceptGames, "עדיין אין מבדקי מושגים שהושלמו.");
     const dilemmaHistoryHtml = section(dilemmaGames, "עדיין אין משחקי דילמות שהושלמו.");
     const ethicsHistoryHtml = section(ethicsGames, "עדיין אין סיבובי אתיקה עיתונאית שהושלמו.");
+    const editorialHistoryHtml = section(editorialGames, "עדיין אין סיבובי שיקולי עריכה שהושלמו.");
     const reportRowsHtml = TERMS.map(t=>{
       const isLearned = !!learned[t.id];
       const times = learnCounts[t.id] || 0;
@@ -2999,6 +3073,9 @@
 
       <div class="section-title" style="margin:20px 0 6px;">📰 היסטוריית אתיקה עיתונאית</div>
       ${ethicsHistoryHtml}
+
+      <div class="section-title" style="margin:20px 0 6px;">✂️ היסטוריית שיקולי עריכה</div>
+      ${editorialHistoryHtml}
 
       <div class="section-title" style="margin:20px 0 6px; color:var(--bad);">אזור מסוכן</div>
       <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;">
@@ -3077,7 +3154,7 @@
       ["מספר משחקים שהושלמו", String(games.length)],
       [],
       ["היסטוריית משחקים","סוג","תיאור","ניקוד","נכונות","מתוך","תאריך"],
-      ...games.map(h=>[h.mode==="ethics" ? "אתיקה עיתונאית" : (h.mode==="dilemma"||h.mode==="sidegame") ? "דילמות" : "מושגים", h.modeLabel||"", h.label||"", String(h.score), String(h.correct), String(h.total), h.date||""])
+      ...games.map(h=>[h.mode==="ethics" ? "אתיקה עיתונאית" : h.mode==="editorial" ? "שיקולי עריכה" : (h.mode==="dilemma"||h.mode==="sidegame") ? "דילמות" : "מושגים", h.modeLabel||"", h.label||"", String(h.score), String(h.correct), String(h.total), h.date||""])
     ];
     const csv = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g,'""')}"`).join(",")).join("\r\n");
     const filename = `דוח-התקדמות-${s.username||"תלמיד"}.csv`;
@@ -3836,7 +3913,9 @@
     { id:"streak7",       emoji:"🗓️", name:"שבוע שלם", desc:"נכנסו 7 ימים רצופים" },
     { id:"surprise",      emoji:"🎁", name:"מזל מתחילים", desc:"קבלו תיבת הפתעה", hidden:true },
     { id:"ethics_first",  emoji:"📰", name:"עיתונאי/ת מתחיל/ה", desc:"סיימו סיבוב דילמות אתיקה" },
-    { id:"ethics_master", emoji:"🛡️", name:"שומר/ת האתיקה", desc:"8+ הכרעות אתיות בסיבוב", hidden:true }
+    { id:"ethics_master", emoji:"🛡️", name:"שומר/ת האתיקה", desc:"8+ הכרעות אתיות בסיבוב", hidden:true },
+    { id:"editorial_first",  emoji:"✂️", name:"עורך/ת משמרת", desc:"סיימו סיבוב שיקולי עריכה" },
+    { id:"editorial_master", emoji:"🗞️", name:"עין חדה", desc:"8+ מקרים מדויקים בסיבוב עריכה", hidden:true }
   ];
   const SURPRISE_FACTS = [
     "העיתון המודפס הראשון בעולם יצא לאור במאה ה־17.",
@@ -4154,6 +4233,259 @@
   }
   $("#ethics-play-exit").addEventListener("click", openEthicsMenu);
 
+  // ---------- EDITORIAL CONSIDERATIONS GAME ----------
+  // stage 1: rule + factor cards. stage 2: 10 random news cases; per case the student picks
+  // a publication urgency (single choice) and the editorial considerations (multi-select).
+  // scoring per case: urgency right +5 / wrong -5; considerations exact +5, partly right 0, mostly wrong -5.
+  // the concept-game rules apply: rules screen + countdown, 7s minimum per case, 10-point
+  // penalty for every earlier attempt at the same case, combo bonus, sounds, XP and surprise boxes.
+  const EDITORIAL_ROUND_SIZE = 10;
+  const editorialNvById = {}; EDITORIAL_NEWS_VALUES.forEach(f=>editorialNvById[f.id]=f);
+  const editorialFactorById = {}; EDITORIAL_FACTORS.forEach(f=>editorialFactorById[f.id]=f);
+  let editorialCardPos = 0, editorialFinishing = false;
+  let editorialRound = null;
+
+  function editorialSeenCounts(){
+    const m = {};
+    (store.gameHistory||[]).filter(h=>h.mode==="editorial" && Array.isArray(h.ids)).forEach(h=>h.ids.forEach(id=>{ m[id] = (m[id]||0)+1; }));
+    return m;
+  }
+  function openEditorialMenu(){
+    $("#editorial-stage1-sub").textContent = `${EDITORIAL_CARDS.length} כרטיסיות: כללי המשחק, ${EDITORIAL_FACTORS.length} שיקולי עריכה ו־${EDITORIAL_NEWS_VALUES.length} קריטריונים של ערך חדשותי`;
+    $("#editorial-stage1-done").textContent = store.editorialLearned ? "✓" : "";
+    $("#editorial-stage2-sub").textContent = `${EDITORIAL_CASES.length} מקרים במאגר · בכל סיבוב ${EDITORIAL_ROUND_SIZE} באקראי · דחיפות +5/-5 ושיקולי עריכה +5/0/-5 · 7 שניות לפחות לכל מקרה`;
+    showView("view-editorial-menu");
+  }
+  $("#editorial-cta").addEventListener("click", openEditorialMenu);
+
+  function startEditorialLearn(){
+    editorialCardPos = 0;
+    buildStoryBars("editorial-story-bars", EDITORIAL_CARDS.length);
+    showView("view-editorial-learn");
+    $("#editorial-card-zone").innerHTML = "";
+    renderEditorialCard(0);
+  }
+  function renderEditorialCard(pos, dir){
+    if(pos < 0 || pos >= EDITORIAL_CARDS.length) return;
+    editorialCardPos = pos;
+    const raw = EDITORIAL_CARDS[pos];
+    const c = raw.kind === "factor" ? editorialFactorById[raw.fid] : raw.kind === "nv" ? editorialNvById[raw.nid] : raw;
+    const tag = raw.kind === "factor" ? `✂️ שיקול עריכה` : raw.kind === "nv" ? `🗞️ ערך חדשותי` : raw.kind === "nvintro" ? `🗞️ ערך חדשותי` : `📋 כללי המשחק`;
+    updateStoryBars("editorial-story-bars", pos);
+    $("#editorial-learn-progress").textContent = `כרטיס ${pos+1} מתוך ${EDITORIAL_CARDS.length}`;
+    const zone = $("#editorial-card-zone");
+    const old = zone.querySelector(".stash-card");
+    const card = document.createElement("div");
+    card.className = "stash-card neon-frame";
+    card.style.overflowY = "auto";
+    card.style.justifyContent = "flex-start";
+    card.style.gap = "10px";
+    card.innerHTML = `
+      <div class="stash-top-row"><span class="stash-tag">${tag}</span></div>
+      <div style="font-size:42px; line-height:1.1;">${c.emoji}</div>
+      <div class="stash-body" style="margin:0; font-size:25px;">${c.title}</div>
+      <div style="font-family:'Rubik',system-ui,sans-serif; font-size:17px; line-height:1.65; font-weight:500;">${c.text}</div>
+      <div class="eth-example">💡 ${raw.kind === "factor" ? "<b>דוגמה:</b> " : raw.kind === "nv" ? "<b>דוגמה:</b> " : ""}${c.example}</div>
+      <div class="stash-foot" style="margin-top:auto; padding-top:8px;">
+        <span class="stash-idx">${pos+1} / ${EDITORIAL_CARDS.length}</span>
+        <span class="tap-hint">${pos === EDITORIAL_CARDS.length-1 ? "הקישו כדי לעבור לחדר העריכה" : "הקישו כדי להמשיך ‹"}</span>
+      </div>`;
+    if(dir==="next"){ card.style.transform = "translateX(-110%)"; }
+    else if(dir==="prev"){ card.style.transform = "translateX(110%)"; }
+    zone.appendChild(card);
+    requestAnimationFrame(()=>{ card.style.transform = "translateX(0)"; });
+    if(old){
+      old.style.transform = dir==="prev" ? "translateX(-110%)" : "translateX(110%)";
+      old.style.opacity = "0";
+      setTimeout(()=>old.remove(), 300);
+    }
+  }
+  function nextEditorialCard(){
+    if(editorialCardPos < EDITORIAL_CARDS.length-1){ renderEditorialCard(editorialCardPos+1, "next"); return; }
+    if(editorialFinishing) return;
+    editorialFinishing = true;
+    store.editorialLearned = true; saveStore(store);
+    confettiBurst(55); playFanfare();
+    toast("סיימתם את שלב 1! עוברים לחדר העריכה 🎉");
+    setTimeout(()=>{ editorialFinishing = false; startEditorialPlay(); }, 700);
+  }
+  $("#editorial-next").addEventListener("click", nextEditorialCard);
+  $("#editorial-prev").addEventListener("click", ()=>{ if(editorialCardPos > 0) renderEditorialCard(editorialCardPos-1, "prev"); });
+  $("#editorial-card-zone").addEventListener("click", nextEditorialCard);
+  $("#editorial-learn-exit").addEventListener("click", openEditorialMenu);
+  $("#editorial-start-learn").addEventListener("click", startEditorialLearn);
+  $("#editorial-start-play").addEventListener("click", ()=> startEditorialPlay());
+
+  function startEditorialPlay(){
+    if(gameLocked){
+      toast("המשחק נעול כרגע על ידי המורה 🔒");
+      openEditorialMenu();
+      return;
+    }
+    // prefer cases the student has met least often (new ones first); random order inside each group
+    const seen = editorialSeenCounts();
+    const picked = shuffle(EDITORIAL_CASES.slice()).sort((a,b)=>(seen[a.id]||0)-(seen[b.id]||0)).slice(0, EDITORIAL_ROUND_SIZE);
+    const items = shuffle(picked).map(c=>Object.assign({}, c, { opts: shuffle(c.c.concat(c.d)), seenBefore: seen[c.id]||0 }));
+    const penalty = items.reduce((n,c)=>n + 10*c.seenBefore, 0);
+    editorialRound = { items, pos:0, tally:{perfect:0, urgencyOk:0, factorsOk:0}, answered:false, score:-penalty, penalty, shownAt:0 };
+    showQuizRulesThenProceed(()=>{
+      comboStreak = 0;
+      buildStoryBars("editorial-play-bars", items.length);
+      showView("view-editorial-play");
+      renderEditorialQuestion();
+    }, { key:"editorial:"+items.map(c=>c.id).join(","), noAudio:true });
+    // showQuizRulesThenProceed derives the penalty from the history key; here it is per case
+    retryPenaltyTotal = penalty;
+    quizScore = -penalty;
+    const repeatRow = $("#rules-repeat-row");
+    if(repeatRow){
+      repeatRow.style.display = penalty > 0 ? "flex" : "none";
+      $("#rules-repeat-text").innerHTML = `יש בסיבוב מקרים שכבר פגשתם - <b>${penalty}-</b> נקודות כבר בהתחלה`;
+    }
+  }
+  function editorialScoreLine(){
+    const r = editorialRound;
+    return `מקרה ${r.pos+1} מתוך ${r.items.length} · 🏆 ${r.score} נק'`;
+  }
+  function renderEditorialQuestion(){
+    const r = editorialRound;
+    const c = r.items[r.pos];
+    r.answered = false;
+    r.shownAt = Date.now();
+    r.pickUrgency = null;
+    r.pickFactors = new Set();
+    updateStoryBars("editorial-play-bars", r.pos);
+    $("#editorial-play-progress").textContent = editorialScoreLine();
+    const body = $("#editorial-play-body");
+    body.innerHTML = `
+      <span class="ed-tag">📰 ${c.ty}</span>
+      <div class="ed-news"><div class="ed-head">${c.h}</div><div class="ed-body">${c.b}</div></div>
+      <div class="eth-ask">1. באיזו דחיפות מפרסמים?</div>
+      <div id="ed-urgency">${Object.keys(EDITORIAL_URGENCY).map(k=>`<button class="ed-opt" data-u="${k}">${EDITORIAL_URGENCY[k].emoji} ${EDITORIAL_URGENCY[k].label}</button>`).join("")}</div>
+      <div class="eth-ask" style="margin-top:14px;">2. אילו שיקולי עריכה מכריעים כאן? (אפשר לבחור כמה)</div>
+      <div id="ed-factors">${c.opts.map(f=>`<button class="ed-opt" data-f="${f}">${editorialFactorById[f].emoji} ${editorialFactorById[f].title}</button>`).join("")}</div>
+      <div class="eth-ask" style="margin-top:14px;">3. אילו קריטריונים של ערך חדשותי מתקיימים בידיעה? (אפשר לבחור כמה)</div>
+      <div id="ed-nv">${EDITORIAL_NEWS_VALUES.map(f=>`<button class="ed-opt" data-f="${f.id}">${f.emoji} ${f.title}</button>`).join("")}</div>
+      <button class="btn-primary" id="ed-submit" style="width:100%; margin-top:6px;" disabled>בחרו דחיפות ולפחות שיקול אחד</button>
+      <div id="ed-feedback"></div>`;
+    window.scrollTo(0,0);
+    $("#view-editorial-play").scrollTop = 0;
+    const refresh = ()=>{
+      const ok = r.pickUrgency && r.pickFactors.size > 0;
+      const b = $("#ed-submit");
+      b.disabled = !ok;
+      b.textContent = ok ? "✂️ אישור ההכרעה" : "בחרו דחיפות ולפחות שיקול אחד";
+    };
+    $$("#ed-urgency .ed-opt", body).forEach(btn=> btn.addEventListener("click", ()=>{
+      if(r.answered) return;
+      r.pickUrgency = btn.dataset.u;
+      $$("#ed-urgency .ed-opt", body).forEach(x=>x.classList.toggle("sel", x === btn));
+      refresh();
+    }));
+    $$("#ed-factors .ed-opt, #ed-nv .ed-opt", body).forEach(btn=> btn.addEventListener("click", ()=>{
+      if(r.answered) return;
+      const f = btn.dataset.f;
+      if(r.pickFactors.has(f)) r.pickFactors.delete(f); else r.pickFactors.add(f);
+      btn.classList.toggle("sel", r.pickFactors.has(f));
+      refresh();
+    }));
+    $("#ed-submit").addEventListener("click", submitEditorial);
+  }
+  function submitEditorial(){
+    const r = editorialRound;
+    if(r.answered || !r.pickUrgency || !r.pickFactors.size) return;
+    r.answered = true;
+    const c = r.items[r.pos];
+    const picked = r.pickFactors;
+    const correctSet = c.c.concat(c.v || []);
+    const hit = correctSet.filter(f=>picked.has(f)).length;
+    const wrongPicks = [...picked].filter(f=>!correctSet.includes(f)).length;
+    const urgencyOk = r.pickUrgency === c.u;
+    const factorsExact = hit === correctSet.length && wrongPicks === 0;
+    const factorsPts = factorsExact ? 5 : (hit > wrongPicks ? 0 : -5);
+    const pts = (urgencyOk ? 5 : -5) + factorsPts;
+    const perfect = urgencyOk && factorsExact;
+    r.score += pts;
+    if(urgencyOk) r.tally.urgencyOk++;
+    if(factorsExact) r.tally.factorsOk++;
+    if(perfect) r.tally.perfect++;
+    if(perfect) celebrateCorrect();
+    else if(pts < 0) punishWrong();
+    // combo / XP / surprise boxes follow the same rules; XP only for cases never met before
+    rewardForAnswer(perfect, { firstAttempt: c.seenBefore === 0, addScore: n=>{ r.score += n; } });
+    $("#editorial-play-progress").textContent = editorialScoreLine();
+    $$("#ed-urgency .ed-opt").forEach(b=>{
+      b.disabled = true;
+      const k = b.dataset.u;
+      if(k === c.u) b.classList.add("ok");
+      else if(k === r.pickUrgency) b.classList.add("wrong");
+    });
+    $$("#ed-factors .ed-opt, #ed-nv .ed-opt").forEach(b=>{
+      b.disabled = true;
+      const f = b.dataset.f, isRight = correctSet.includes(f), isPicked = picked.has(f);
+      if(isRight && isPicked) b.classList.add("ok");
+      else if(isRight) b.classList.add("miss");
+      else if(isPicked) b.classList.add("wrong");
+    });
+    $("#ed-submit").style.display = "none";
+    const last = r.pos === r.items.length-1;
+    const fmt = n => n > 0 ? "+"+n : String(n);
+    $("#ed-feedback").innerHTML = `
+      <div class="eth-result ${perfect ? "tone-good" : pts < 0 ? "tone-bad" : "tone-mixed"}">
+        <span class="eth-tone-chip">${perfect ? "✅ הכרעה מדויקת" : pts < 0 ? "⚠️ כדאי לחשוב שוב" : "⚖️ בכיוון הנכון"} (${fmt(pts)} נק')</span><br>
+        <b>דחיפות:</b> ${urgencyOk ? "נכון" : "ההחלטה המומלצת: " + EDITORIAL_URGENCY[c.u].emoji + " " + EDITORIAL_URGENCY[c.u].label} (${fmt(urgencyOk ? 5 : -5)})<br>
+        <b>שיקולי עריכה וערך חדשותי:</b> ${factorsExact ? "בחרתם בדיוק את השיקולים הנכונים" : "שיקולי העריכה הנכונים: " + c.c.map(f=>editorialFactorById[f].emoji+" "+editorialFactorById[f].title).join(" · ") + "<br><b>ערך חדשותי שמתקיים:</b> " + (c.v||[]).map(f=>editorialNvById[f].emoji+" "+editorialNvById[f].title).join(" · ")} (${fmt(factorsPts)})<br><br>
+        <b>למה?</b> ${c.w}
+      </div>
+      <div class="eth-principle-note">🟩 נכון ונבחר · 🟧 שיקול נכון שפספסתם · 🟥 נבחר אבל לא רלוונטי כאן</div>
+      <button class="btn-primary" id="ed-next-btn" style="width:100%;">${last ? "לסיכום הסיבוב 🏁" : "המקרה הבא ›"}</button>`;
+    gateButtonUntil($("#ed-next-btn"), r.shownAt, last ? "לסיכום הסיבוב 🏁" : "המקרה הבא ›");
+    $("#ed-next-btn").addEventListener("click", ()=>{
+      if(last) finishEditorialRound();
+      else { r.pos++; renderEditorialQuestion(); }
+    });
+    const fb = $("#ed-feedback");
+    if(fb && fb.scrollIntoView) fb.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+  function finishEditorialRound(){
+    const r = editorialRound;
+    const total = r.items.length;
+    updateStoryBars("editorial-play-bars", total);
+    store.gameHistory = store.gameHistory || [];
+    store.gameHistory.push({
+      mode:"editorial", modeLabel:"✂️ שיקולי עריכה", label:`${total} מקרים`, quizKey:"editorial",
+      ids: r.items.map(c=>c.id),
+      score:r.score, correct:r.tally.perfect, total, date:new Date().toISOString()
+    });
+    if(store.gameHistory.length > 50) store.gameHistory = store.gameHistory.slice(-50);
+    saveStore(store);
+    if(authState){ firestoreSetDoc(studentDocId || authState.uid, { gameHistory: store.gameHistory }).catch(()=>{}); }
+    awardBadge("editorial_first");
+    if(r.tally.perfect >= 8) awardBadge("editorial_master");
+    if(r.tally.perfect === total && total >= 5) awardBadge("perfect");
+    const share = r.tally.perfect/total;
+    const msg = share >= 0.7 ? "שיקול דעת עריכתי מצוין! 👏" : share >= 0.4 ? "בכיוון הנכון - כדאי לחזור על השיקולים ולנסות שוב" : "כדאי לחזור לכרטיסיות ולנסות שוב";
+    if(share >= 0.7){ confettiBurst(90, true); playFanfare(); }
+    $("#editorial-play-progress").textContent = "סיכום הסיבוב";
+    $("#editorial-play-body").innerHTML = `
+      <div class="eth-scenario" style="text-align:center;">
+        <div style="font-size:42px;">${share >= 0.7 ? "🏅" : share >= 0.4 ? "👍" : "📚"}</div>
+        <b style="font-size:19px;">${msg}</b><br>
+        <span class="sub">🏆 ניקוד סופי: ${r.score} נקודות${r.penalty ? ` (כולל ${r.penalty}- על מקרים שכבר פגשתם)` : ""}</span>
+      </div>
+      <div class="eth-result tone-good">✅ מקרים שהוכרעו נכון לגמרי: <b>${r.tally.perfect}</b> מתוך ${total}</div>
+      <div class="eth-result tone-mixed">🚦 דחיפות נכונה: <b>${r.tally.urgencyOk}</b> מתוך ${total}</div>
+      <div class="eth-result tone-mixed">✂️ שיקולי עריכה מדויקים: <b>${r.tally.factorsOk}</b> מתוך ${total}</div>
+      <button class="btn-primary" id="ed-again-btn" style="width:100%; margin-top:6px;">🔀 סיבוב חדש - מקרים אחרים</button>
+      <button class="btn-secondary" id="ed-review-btn" style="margin-top:10px;">📚 חזרה על השיקולים</button>
+      <button class="btn-secondary" id="ed-menu-btn" style="margin-top:10px;">חזרה לתפריט</button>`;
+    $("#ed-again-btn").addEventListener("click", ()=> startEditorialPlay());
+    $("#ed-review-btn").addEventListener("click", startEditorialLearn);
+    $("#ed-menu-btn").addEventListener("click", openEditorialMenu);
+    $("#view-editorial-play").scrollTop = 0;
+  }
+  $("#editorial-play-exit").addEventListener("click", openEditorialMenu);
+
   // ---------- init ----------
   if(!getStudentName()){
     showView("view-name-gate");
@@ -4165,6 +4497,4 @@
   }
 })();
 </script>
-
-</body>
-</html>
+</body></html>
