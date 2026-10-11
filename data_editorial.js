@@ -10,12 +10,12 @@ const EDITORIAL_URGENCY = {
   never: { emoji:"🚫", label:"לא לפרסם (בצורה הזאת)", short:"לא לפרסם" }
 };
 const EDITORIAL_NEWS_VALUES = [
-  { id:"nv_time",    emoji:"🕐", title:"עדכניות (אקטואליות)",       text:"ידיעה חדשותית היא ידיעה על מה שקרה זה עתה או עומד לקרות. ככל שהאירוע טרי יותר, כך ערכו החדשותי גבוה יותר, ועם הזמן הוא דועך.", example:"שריפה שפרצה לפני דקות היא חדשות. שריפה מלפני שנה היא היסטוריה." },
-  { id:"nv_near",    emoji:"📍", title:"קרבה",                       text:"אירועים שקרובים אלינו - גיאוגרפית, תרבותית או רגשית - מעניינים אותנו יותר. תאונה בעיר שלי חשובה לי יותר מתאונה בחצי עולם.", example:"סגירת כביש בעיר מגוריי נוגעת בי יותר מסגירת כביש במדינה רחוקה." },
-  { id:"nv_impact",  emoji:"💥", title:"חשיבות והשפעה",             text:"ככל שהאירוע משפיע על יותר אנשים או משנה את חייהם בצורה משמעותית, כך הוא חשוב יותר ויקבל מקום מרכזי.", example:"שינוי בריבית משפיע על מיליוני משפחות. החלפת עיצוב אתר פחות." },
-  { id:"nv_unusual", emoji:"🦄", title:"חריגות ויוצא דופן",          text:"ידיעה על דבר נדיר, מפתיע או חריג תמשוך תשומת לב. ״כלב נשך איש״ אינה חדשות, אבל ״איש נשך כלב״ כן.", example:"אדם שחצה את האוקיינוס בסירת גומי הוא חריג ולכן מעניין." },
-  { id:"nv_people",  emoji:"🌟", title:"אישיות ועניין אנושי",        text:"אנשים בולטים, ידוענים ובעלי תפקידים מושכים עניין, וגם סיפורים אישיים שנוגעים ללב או מעוררים הזדהות.", example:"שר שמתפטר, או סיפור על חולה שמקבל מתנה מרגשת." },
-  { id:"nv_conflict",emoji:"⚔️", title:"עימות ומחלוקת",             text:"כשיש מחלוקת, מאבק או עימות בין צדדים - יש דרמה ועניין. אבל חשוב לא להפוך כל ויכוח לחדשות.", example:"מחלוקת בין עובדים למעסיק לפני שביתה." }
+  { id:"nv_impact",  emoji:"💥", title:"חשיבות האירוע (היקף והשפעה)", text:"מידת ההשפעה של האירוע על הציבור. ככל שהאירוע משפיע על מספר גדול יותר של אנשים או נושא השלכות משמעותיות, כך ערכו החדשותי גבוה יותר.", example:"שינוי בריבית משפיע על מיליוני משפחות, ולכן הוא חשוב יותר משינוי שמשפיע על קבוצה קטנה." },
+  { id:"nv_near",    emoji:"📍", title:"רלוונטיות וקרבה (לקהל היעד)", text:"מידת הנגיעה של האירוע לחייו של צרכן התקשורת, הן מבחינה גיאוגרפית (אירוע קרוב) והן מבחינה תרבותית או רגשית.", example:"סגירת כביש בעיר שלכם נוגעת בכם יותר מסגירת כביש במדינה רחוקה." },
+  { id:"nv_unusual", emoji:"🦄", title:"ייחודיות וחריגות", text:"אירוע בלתי צפוי, יוצא דופן, נדיר או חד־פעמי, השובר את השגרה הרגילה.", example:"״כלב נשך איש״ אינה חדשות, אבל ״איש נשך כלב״ כן." },
+  { id:"nv_people",  emoji:"🌟", title:"אישיות מפורסמת (אליטות)", text:"מעורבות של דמויות מוכרות, משפיעות, פוליטיקאים, מנהיגים או ידוענים באירוע, המקפיצה מיד את העניין הציבורי בו.", example:"התפטרות של שר מעניינת יותר מהתפטרות של פקיד לא מוכר." },
+  { id:"nv_human",   emoji:"❤️", title:"עניין אנושי", text:"סיפורים המעוררים רגש, אמפתיה, הזדהות, שמחה או עצב, ומציגים את ההיבט האנושי שמאחורי הידיעה היבשה.", example:"סיפורה של ניצולת שואה בת 98 שחוגגת בת מצווה נוגע ללב." },
+  { id:"nv_time",    emoji:"🕐", title:"עדכניות וטריות המידע", text:"רכיב הזמן הוא קריטי; המידע חייב להיות חדש, עכשווי ומדווח סמוך ככל הניתן למועד התרחשותו.", example:"שריפה שפרצה לפני דקות היא חדשות, ושריפה מלפני שנה היא היסטוריה." }
 ];
 const EDITORIAL_FACTORS = [
   { id:"public",   emoji:"📣", title:"עניין ציבורי",            text:"האם הציבור צריך לדעת את זה כדי לקבל החלטות, לשמור על עצמו או לפקח על השלטון? ידיעה עם עניין ציבורי גבוה מקבלת מקום וקדימות.", example:"תקציב המדינה או סכנה בכביש חשובים לציבור, גם אם הם פחות ״מעניינים״ מרכילות." },
@@ -34,19 +34,40 @@ const EDITORIAL_FACTORS = [
 ];
 const EDITORIAL_CARDS = [
   { kind:"rules", emoji:"📋", title:"ברוכים הבאים לחדר העריכה",
+    rows:[
+      { e:"📰", t:"מגיעה אליכם ידיעה", s:"ביטחון, כלכלה, צבע, חדשות קשות ורכות, פייק ניוז ותוכן שנוצר ב־AI.", c:"#6a3fb5" },
+      { e:"🚦", t:"מכריעים בדחיפות", s:"מיידי, היום, להמתין או לא לפרסם בכלל.", c:"#f5a623" },
+      { e:"✂️", t:"בוחרים שיקולי עריכה", s:"בחירה מרובה מתוך כמה שיקולים.", c:"#1f6f5c" },
+      { e:"🗞️", t:"מסמנים ערך חדשותי", s:"אילו מששת הקריטריונים מתקיימים בידיעה.", c:"#2a7de1" },
+      { e:"💡", t:"מקבלים הסבר", s:"אחרי כל מקרה רואים מה נכון ולמה.", c:"#e0457b" }
+    ],
     text:"אתם עורכי החדשות. בכל סיבוב מגיעה אליכם ידיעה, ועליכם להחליט שני דברים: באיזו דחיפות לפרסם אותה (אם בכלל), ואילו שיקולי עריכה וקריטריונים של ערך חדשותי מתקיימים - בחירה מרובה מתוך כמה שיקולים.",
     example:"הידיעות מגוונות: ביטחון, כלכלה, כתבות צבע, חדשות קשות ורכות, פייק ניוז ותוכן שנוצר בבינה מלאכותית." },
   { kind:"rules", emoji:"🚦", title:"ארבע רמות הדחיפות",
+    rows:[
+      { e:"🚨", t:"מיידי", s:"פלאש או התראה עכשיו - יש סכנה או חשיבות גדולה בכל דקה.", c:"#e5173f" },
+      { e:"🕒", t:"היום", s:"נכנסת למהדורה הקרובה אחרי בדיקה מהירה.", c:"#f5a623" },
+      { e:"⏳", t:"להמתין", s:"צריך אימות או השלמה, או שאינה תלויה בזמן.", c:"#2a7de1" },
+      { e:"🚫", t:"לא לפרסם", s:"בצורה הזאת היא פוגעת, מטעה או אסורה.", c:"#6b6b78" }
+    ],
     text:"🚨 מיידי - פלאש או התראה עכשיו, כי יש סכנה או חשיבות גדולה בכל דקה. 🕒 היום - נכנסת למהדורה הקרובה אחרי בדיקה מהירה. ⏳ להמתין - דורשת אימות או השלמה, או שאינה תלויה בזמן ויכולה לחכות לרגע נוח. 🚫 לא לפרסם - הפרסום בצורה הזאת פוגע, מטעה או אסור.",
     example:"אין בהכרח ״תשובה אחת״ לכל מצב, אבל יש החלטה שהיא הכי מבוססת - ובסוף כל מקרה תקבלו הסבר." },
   { kind:"rules", emoji:"🏆", title:"כללי המשחק והניקוד",
+    rows:[
+      { e:"🎲", t:"10 מקרים באקראי", s:"בכל סיבוב נבחרים 10 מקרים מהמאגר.", c:"#6a3fb5" },
+      { e:"🚦", t:"דחיפות: +5 / -5", s:"דחיפות נכונה מקבלת 5, שגויה מורידה 5.", c:"#f5a623" },
+      { e:"✂️", t:"שיקולים וערך חדשותי: +5 / 0 / -5", s:"בדיוק נכון +5, בכיוון הנכון 0, בכיוון שגוי -5.", c:"#1f6f5c" },
+      { e:"⏱️", t:"7 שניות לכל מקרה", s:"חייבים להתעכב לפחות 7 שניות לפני שממשיכים.", c:"#2a7de1" },
+      { e:"🔁", t:"מקרה חוזר: -10", s:"על כל ניסיון קודם באותו מקרה.", c:"#e5173f" },
+      { e:"🔥", t:"5 ברצף: +5 בונוס", s:"5 מקרים מדויקים ברצף. XP והפתעות רק בפעם הראשונה.", c:"#e0457b" }
+    ],
     text:"בכל סיבוב 10 מקרים שנבחרים באקראי מהמאגר. בכל מקרה: דחיפות נכונה +5 (שגויה -5), ושיקולי עריכה וקריטריוני ערך חדשותי בדיוק נכונים +5 (לא מדויקים אך בכיוון 0, בכיוון שגוי -5). חייבים להתעכב לפחות 7 שניות על כל מקרה. מקרה שכבר ראיתם בעבר מוריד 10 נקודות על כל ניסיון קודם. 5 מקרים ברצף שבהם הכול נכון מזכים ב־5 נקודות בונוס.",
     example:"נקודות ניסיון (XP) והפתעות מחכות לכם רק בפעם הראשונה שאתם פוגשים מקרה." },
   { kind:"nvintro", emoji:"🗞️", title:"שישה קריטריונים לערך חדשותי",
-    text:"לא כל דבר שקרה הוא חדשות. כדי להחליט מה ראוי לפרסום משתמשים בשישה קריטריונים של ערך חדשותי: עדכניות, קרבה, חשיבות והשפעה, חריגות, אישיות ועניין אנושי, ועימות. ככל שיותר קריטריונים מתקיימים - הידיעה חזקה יותר. בכל מקרה במשחק תסמנו גם אילו מהם מתקיימים.",
+    text:"לא כל דבר שקרה הוא חדשות. כדי להחליט מה ראוי לפרסום משתמשים בשישה קריטריונים של ערך חדשותי: חשיבות האירוע, רלוונטיות וקרבה, ייחודיות וחריגות, אישיות מפורסמת, עניין אנושי ועדכניות. ככל שיותר קריטריונים מתקיימים - הידיעה חזקה יותר. בכל מקרה במשחק תסמנו גם אילו מהם מתקיימים.",
     example:"אתם מסמנים גם קריטריונים של ערך חדשותי, יחד עם שיקולי העריכה." },
-  { kind:"nv", nid:"nv_time" }, { kind:"nv", nid:"nv_near" }, { kind:"nv", nid:"nv_impact" },
-  { kind:"nv", nid:"nv_unusual" }, { kind:"nv", nid:"nv_people" }, { kind:"nv", nid:"nv_conflict" },
+  { kind:"nv", nid:"nv_impact" }, { kind:"nv", nid:"nv_near" }, { kind:"nv", nid:"nv_unusual" },
+  { kind:"nv", nid:"nv_people" }, { kind:"nv", nid:"nv_human" }, { kind:"nv", nid:"nv_time" },
   { kind:"factor", fid:"public" },
   { kind:"factor", fid:"time" },
   { kind:"factor", fid:"verify" },
@@ -207,5 +228,5 @@ const EDITORIAL_CASES = [
 ];
 
 // הקריטריונים של ערך חדשותי שמתקיימים בכל מקרה (מחוברים למקרים בטעינה)
-const EDITORIAL_NV_MAP = {s01:["nv_time","nv_near"],s02:["nv_conflict","nv_impact"],s03:["nv_impact","nv_conflict"],s04:["nv_time","nv_near","nv_impact"],s05:["nv_impact","nv_people"],s06:["nv_near","nv_impact"],s07:["nv_people","nv_near"],s08:["nv_impact","nv_conflict"],s09:["nv_conflict","nv_time"],s10:["nv_time","nv_impact","nv_near"],c01:["nv_people"],c02:["nv_near","nv_unusual"],c03:["nv_people","nv_unusual"],c04:["nv_time","nv_near"],c05:["nv_people"],c06:["nv_people","nv_unusual"],e01:["nv_time","nv_impact"],e02:["nv_conflict","nv_impact"],e03:["nv_impact","nv_near"],e04:["nv_impact"],e05:["nv_impact"],e06:["nv_impact","nv_near"],e07:["nv_impact","nv_conflict"],e08:["nv_impact","nv_near"],f01:["nv_people"],f02:["nv_near"],f03:["nv_people"],f04:["nv_near"],f05:["nv_people"],h01:["nv_time","nv_near","nv_impact"],h02:["nv_impact","nv_near"],h03:["nv_impact","nv_conflict"],h04:["nv_time","nv_impact","nv_conflict"],h05:["nv_conflict","nv_people","nv_impact"],h06:["nv_time","nv_near","nv_impact"],h07:["nv_time","nv_impact"],h08:["nv_people","nv_conflict","nv_impact"],n01:["nv_impact","nv_unusual"],n02:["nv_impact","nv_unusual"],n03:["nv_impact","nv_near"],n04:["nv_people","nv_conflict"],n05:["nv_unusual","nv_impact"],n06:["nv_unusual","nv_impact","nv_time"],n07:["nv_time","nv_unusual"],a01:["nv_people","nv_unusual","nv_impact"],a02:["nv_near","nv_unusual"],a03:["nv_near","nv_time"],a04:["nv_time","nv_near","nv_unusual"],a05:["nv_impact","nv_unusual"],a06:["nv_time","nv_impact"],a07:["nv_unusual"],g01:["nv_people","nv_time"],g02:["nv_conflict","nv_people"],g03:["nv_impact","nv_unusual"],g04:["nv_time","nv_near","nv_impact"],g05:["nv_people","nv_unusual"],g06:["nv_conflict","nv_people","nv_near"],g07:["nv_conflict","nv_people","nv_impact"],g08:["nv_conflict","nv_unusual","nv_people"],g09:["nv_time","nv_impact","nv_conflict"],g10:["nv_time","nv_near","nv_impact"],g11:["nv_people","nv_conflict"],g12:["nv_conflict","nv_near"],g13:["nv_near","nv_impact"],g14:["nv_near","nv_people"],g15:["nv_time","nv_near","nv_impact","nv_unusual"],g16:["nv_conflict","nv_impact"]};
+const EDITORIAL_NV_MAP = {s01:["nv_time","nv_near"],s02:["nv_impact","nv_time"],s03:["nv_impact","nv_time"],s04:["nv_time","nv_near","nv_impact"],s05:["nv_human","nv_impact"],s06:["nv_near","nv_impact"],s07:["nv_human","nv_near"],s08:["nv_impact","nv_unusual"],s09:["nv_time","nv_impact"],s10:["nv_time","nv_impact","nv_near"],c01:["nv_human"],c02:["nv_near","nv_unusual"],c03:["nv_human","nv_unusual"],c04:["nv_time","nv_near"],c05:["nv_human"],c06:["nv_human","nv_unusual"],e01:["nv_time","nv_impact"],e02:["nv_impact","nv_time"],e03:["nv_impact","nv_near"],e04:["nv_impact"],e05:["nv_impact"],e06:["nv_impact","nv_near","nv_human"],e07:["nv_impact","nv_time"],e08:["nv_impact","nv_near"],f01:["nv_people"],f02:["nv_near"],f03:["nv_people"],f04:["nv_near"],f05:["nv_people"],h01:["nv_time","nv_near","nv_impact"],h02:["nv_impact","nv_near"],h03:["nv_impact","nv_people"],h04:["nv_time","nv_impact"],h05:["nv_people","nv_impact"],h06:["nv_time","nv_near","nv_impact"],h07:["nv_time","nv_impact"],h08:["nv_people","nv_impact"],n01:["nv_impact","nv_unusual"],n02:["nv_impact","nv_unusual"],n03:["nv_impact","nv_near"],n04:["nv_people"],n05:["nv_unusual","nv_impact"],n06:["nv_unusual","nv_impact","nv_time"],n07:["nv_time","nv_unusual"],a01:["nv_people","nv_unusual","nv_impact"],a02:["nv_near","nv_unusual"],a03:["nv_near","nv_time"],a04:["nv_time","nv_near","nv_unusual"],a05:["nv_human","nv_unusual"],a06:["nv_time","nv_impact"],a07:["nv_unusual"],g01:["nv_people","nv_time"],g02:["nv_impact","nv_near"],g03:["nv_impact","nv_unusual"],g04:["nv_time","nv_near","nv_human","nv_impact"],g05:["nv_unusual","nv_human"],g06:["nv_near","nv_impact"],g07:["nv_people","nv_impact"],g08:["nv_unusual","nv_impact"],g09:["nv_time","nv_impact"],g10:["nv_time","nv_near","nv_impact"],g11:["nv_people"],g12:["nv_near"],g13:["nv_near","nv_impact"],g14:["nv_near","nv_people"],g15:["nv_time","nv_near","nv_impact","nv_human"],g16:["nv_impact"]};
 EDITORIAL_CASES.forEach(c=>{ c.v = EDITORIAL_NV_MAP[c.id] || []; });
