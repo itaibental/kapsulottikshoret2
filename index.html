@@ -3063,9 +3063,11 @@
     const keepId = opts.keep && $("#teacher-student-select") ? (()=>{ const i = $("#teacher-student-select").value; return i !== "" && teacherStudentsCache[Number(i)] ? teacherStudentsCache[Number(i)].id : null; })() : null;
     if(!opts.keep){ teacherGradeFilter = ""; showView("view-teacher"); }
     renderTeacherSchoolPanel();
-    await renderTeacherLockPanel();
+    const tv = $("#view-teacher");
+    const savedScroll = { w: window.scrollY, v: tv ? tv.scrollTop : 0 };
+    if(!opts.silent) await renderTeacherLockPanel();
     const body = $("#teacher-body");
-    body.innerHTML = `<div class="sub">${opts.keep ? "מרענן נתונים מהשרת..." : "טוען נתוני תלמידים..."}</div>`;
+    if(!opts.silent) body.innerHTML = `<div class="sub">${opts.keep ? "מרענן נתונים מהשרת..." : "טוען נתוני תלמידים..."}</div>`;
     const rbtn = $("#teacher-refresh-btn");
     if(rbtn){ rbtn.disabled = true; rbtn.classList.add("spinning"); }
     try{
@@ -3084,7 +3086,9 @@
       teacherStudentsCache = students;
       teacherLoadedAt = new Date();
       renderTeacherList(keepId);
+      if(opts.silent){ window.scrollTo(0, savedScroll.w); if(tv) tv.scrollTop = savedScroll.v; }
     }catch(e){
+      if(opts.silent) return;
       body.innerHTML = `<div class="sub">שגיאה בטעינת נתוני התלמידים. ודאו שכללי Firestore מאפשרים קריאה מציבור התלמידים (ראו הוראות ההגדרה).</div>`;
     }finally{
       if(rbtn){ rbtn.disabled = false; rbtn.classList.remove("spinning"); }
@@ -3140,6 +3144,18 @@
       }
     }
   }
+  // while the dashboard is open it pulls fresh results from the server on its own
+  // every minute (students' results are saved to the server the moment they
+  // finish a round, but the dashboard only shows what it last downloaded)
+  let teacherAutoRefreshBusy = false;
+  setInterval(async ()=>{
+    const v = $("#view-teacher");
+    if(!v || !v.classList.contains("active") || teacherAutoRefreshBusy || document.hidden) return;
+    if(!$("#teacher-student-select")) return;
+    teacherAutoRefreshBusy = true;
+    try{ await openTeacherDashboard({ keep:true, silent:true }); }catch(e){}
+    teacherAutoRefreshBusy = false;
+  }, 60000);
   $("#teacher-refresh-btn").addEventListener("click", ()=>{
     openTeacherDashboard({ keep:true });
     toast("מרענן נתונים מהשרת...");
