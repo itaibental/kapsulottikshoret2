@@ -631,6 +631,12 @@
   .ed-modal .ed-m-head{font-size:19px; font-weight:800; margin-bottom:10px;}
   .ed-modal .ed-m-verdict{display:inline-block; padding:5px 12px; border-radius:999px; font-weight:800; font-size:13.5px; margin-bottom:10px; color:#fff; background:var(--mc,#6a3fb5);}
   .ed-modal p{margin:0 0 10px;}
+  .grade-chips{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .grade-chip{padding:8px 14px; border-radius:999px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit;}
+  .grade-chip span{opacity:.65; margin-inline-start:4px;}
+  .grade-chip.active{background:var(--accent); border-color:var(--accent); color:var(--accent-ink);}
+  #teacher-refresh-btn.spinning{animation:ref-spin .9s linear infinite; opacity:.7;}
+  @keyframes ref-spin{to{transform:rotate(360deg);}}
   .ed-rules{display:flex; flex-direction:column; gap:14px; margin:6px 0 4px;}
   .ed-rule{display:flex; gap:14px; align-items:center; padding:14px; border-radius:18px; background:var(--surface); border:1.5px solid var(--line); border-inline-start:6px solid var(--rc);}
   .ed-rule .ed-re{flex:none; width:52px; height:52px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:28px; background:color-mix(in srgb, var(--rc) 20%, var(--surface));}
@@ -669,6 +675,12 @@
       <input id="name-gate-password" type="password" placeholder="תמציאו סיסמה לשמירה על החשבון שלכם" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:12px;">
       <select id="name-gate-school" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:16px;">
         <option value="">בחרו את בית הספר שלכם</option>
+      </select>
+      <select id="name-gate-grade" style="width:100%; max-width:320px; padding:14px; border-radius:14px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; text-align:center; margin-bottom:16px;">
+        <option value="">בחרו את הכיתה שלכם</option>
+        <option value="י׳">כיתה י׳</option>
+        <option value="י״א">כיתה י״א</option>
+        <option value="י״ב">כיתה י״ב</option>
       </select>
       <div class="sub" id="name-gate-password-hint" style="margin-bottom:10px; font-size:11.5px;">הסיסמה שומרת על ההתקדמות שלכם - אותו שם, סיסמה ובית ספר במכשיר אחר יחברו אתכם לאותה היסטוריה</div>
       <div id="name-gate-msg" class="sub" style="margin-bottom:10px; color:#c23b3b;"></div>
@@ -943,6 +955,7 @@
         <h2>🧑‍🏫 דשבורד מורה</h2>
         <div class="sub">התקדמות תלמידים שנרשמו לאפליקציה</div>
       </div>
+      <button class="icon-btn" id="teacher-refresh-btn" title="רענון נתונים מהשרת" aria-label="רענון נתונים מהשרת">🔄</button>
     </div>
     <div id="teacher-school-panel" style="padding:0 16px 10px;"></div>
     <div id="teacher-lock-panel" style="padding:0 16px 14px;"></div>
@@ -1589,7 +1602,19 @@
   // reconnects to their own history from a different device. returns
   // {ok:true} on success (studentDocId is set as a side effect) or
   // {ok:false, message} if the password doesn't match an existing record.
-  async function resolveStudentLogin(name, password, school){
+  // wipes the personal progress kept on this device (used when a different
+  // student logs in on the same device). written straight to localStorage -
+  // never through saveStore - so the cloud sync can't push the blank data
+  // into the previous student's record.
+  function resetLocalStudentData(){
+    const keep = { quizAudioMuted: !!(store && store.quizAudioMuted) };
+    store = Object.assign({ learned:{}, lastScore:null, lastTotal:null, streak:0, lastVisit:null, bestChallengeStreak:0, gameHistory:[], quizAudioMuted:false },
+      keep, { learnCounts:{}, xp:0, badges:{}, ethicsLearned:false, editorialLearned:false });
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){}
+  }
+  function newStudentDocId(){ return "s" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  async function resolveStudentLogin(name, password, school, grade){
+    const prevDocId = studentDocId, prevName = getStudentName();
     let existing = null;
     try{
       if(!authState) await signInAnonymousStudent();
@@ -1599,7 +1624,17 @@
         if(storedPass && storedPass !== password){
           return { ok:false, message:"הסיסמה שגויה. אפשר לבקש מהמורה לבדוק את הסיסמה בדשבורד." };
         }
-        studentDocId = existing.id;
+      }
+      // which cloud record this login belongs to
+      const targetId = existing ? existing.id
+        : (prevDocId && prevName === name) ? prevDocId
+        : prevDocId ? newStudentDocId()
+        : authState.uid;
+      // a different student than the one whose data sits on this device: start clean
+      if(prevDocId && prevDocId !== targetId) resetLocalStudentData();
+      else if(!prevDocId && prevName && prevName !== name) resetLocalStudentData();
+      studentDocId = targetId;
+      if(existing){
         store.learned = existing.learned || {};
         store.learnCounts = existing.learnCounts || {};
         if(existing.lastScore != null) store.lastScore = existing.lastScore;
@@ -1608,15 +1643,13 @@
         store.xp = Math.max(store.xp||0, existing.xp||0);
         store.badges = Object.assign({}, store.badges||{}, existing.badges||{});
         store.gameHistory = existing.gameHistory || [];
-        saveStore(store);
-      } else {
-        studentDocId = authState.uid;
+        try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){}
       }
       saveStudentDocId(studentDocId);
       authState.username = name;
       saveAuthState();
       const payload = {
-        username: name, password, school: school||"",
+        username: name, password, school: school||"", grade: grade||"",
         learned: store.learned||{}, learnCounts: store.learnCounts||{}, lastScore: store.lastScore, lastTotal: store.lastTotal,
         streak: store.streak||0, gameHistory: store.gameHistory||[], xp: store.xp||0, badges: store.badges||{}
       };
@@ -1628,7 +1661,8 @@
       // device just can't verify/reconnect a password-protected history
       // from elsewhere until the network is back, so fall back to treating
       // this as this device's own identity
-      if(!studentDocId) studentDocId = authState ? authState.uid : null;
+      if(prevName && prevName !== name){ resetLocalStudentData(); studentDocId = newStudentDocId(); }
+      else if(!studentDocId) studentDocId = authState ? authState.uid : null;
       if(studentDocId) saveStudentDocId(studentDocId);
       return { ok:true, offline:true };
     }
@@ -2734,10 +2768,41 @@
     }
     return pass === DEFAULT_TEACHER_PASSWORD ? { ok:true } : { ok:false, message:"סיסמה שגויה." };
   }
+  // a teacher who refreshes the page stays signed in as long as their last
+  // activity was less than 10 minutes ago; after that the login screen returns
+  const TEACHER_SESSION_KEY = "tikshoret_teacher_session";
+  const TEACHER_SESSION_MS = 10*60*1000;
+  function saveTeacherSession(school){
+    try{ localStorage.setItem(TEACHER_SESSION_KEY, JSON.stringify({ school: school||"", ts: Date.now() })); }catch(e){}
+  }
+  function clearTeacherSession(){
+    try{ localStorage.removeItem(TEACHER_SESSION_KEY); }catch(e){}
+  }
+  function loadValidTeacherSession(){
+    try{
+      const o = JSON.parse(localStorage.getItem(TEACHER_SESSION_KEY) || "null");
+      if(o && typeof o.ts === "number" && Date.now() - o.ts < TEACHER_SESSION_MS) return o;
+    }catch(e){}
+    return null;
+  }
+  function touchTeacherSession(){
+    const v = $("#view-teacher");
+    if(!v || !v.classList.contains("active") || adminViewing) return;
+    saveTeacherSession(teacherSchool);
+  }
+  ["click","keydown","touchstart","scroll"].forEach(ev=> document.addEventListener(ev, ()=>{
+    // throttled: at most one write every few seconds
+    const now = Date.now();
+    if(now - (touchTeacherSession._last||0) < 3000) return;
+    touchTeacherSession._last = now;
+    touchTeacherSession();
+  }, true));
+  setInterval(touchTeacherSession, 30000);
   function enterTeacherDashboard(school){
     adminViewing = false;
     teacherSchool = school;
     saveTeacherSchool(teacherSchool);
+    saveTeacherSession(school);
     openTeacherDashboard();
   }
 
@@ -2859,7 +2924,8 @@
   // staff (teacher/admin) who came in from the login screen have no student
   // identity on this device, so "back" returns them to the login screen
   function leaveStaffArea(){
-    if(getStudentName()){ renderHome(); showView("view-home"); }
+    clearTeacherSession();
+    if(studentSessionActive){ renderHome(); showView("view-home"); }
     else { setNameGateRole("student"); showView("view-name-gate"); }
   }
 
@@ -2986,45 +3052,98 @@
   // selected student - toggled by the teacher in renderTeacherStudentDetail
   let teacherHistorySortNewestFirst = true;
 
-  async function openTeacherDashboard(){
-    showView("view-teacher");
+  const GRADE_ORDER = ["י׳","י״א","י״ב"];
+  let teacherGradeFilter = "";   // "" = all grades, "none" = students without a grade
+  const gradeLabel = g => g ? "כיתה " + g : "ללא כיתה";
+  const gradeRank = g => { const i = GRADE_ORDER.indexOf(g); return i < 0 ? 99 : i; };
+  let teacherLoadedAt = null;
+  // opts.keep: re-fetch from the server but stay on the same filter / selected student
+  async function openTeacherDashboard(opts){
+    opts = opts || {};
+    const keepId = opts.keep && $("#teacher-student-select") ? (()=>{ const i = $("#teacher-student-select").value; return i !== "" && teacherStudentsCache[Number(i)] ? teacherStudentsCache[Number(i)].id : null; })() : null;
+    if(!opts.keep){ teacherGradeFilter = ""; showView("view-teacher"); }
     renderTeacherSchoolPanel();
     await renderTeacherLockPanel();
     const body = $("#teacher-body");
-    body.innerHTML = `<div class="sub">טוען נתוני תלמידים...</div>`;
+    body.innerHTML = `<div class="sub">${opts.keep ? "מרענן נתונים מהשרת..." : "טוען נתוני תלמידים..."}</div>`;
+    const rbtn = $("#teacher-refresh-btn");
+    if(rbtn){ rbtn.disabled = true; rbtn.classList.add("spinning"); }
     try{
       let students = await firestoreListStudents();
       if(teacherSchool){
         students = students.filter(s => String(s.school||"").trim() === teacherSchool);
       }
-      // starred students first, then alphabetically by name - this is the
-      // "sort by student name" the teacher asked for
+      // by grade (י׳, י״א, י״ב, then no grade), starred first, then alphabetically
       students.sort((a,b)=>{
+        const ga = gradeRank(a.grade), gb = gradeRank(b.grade);
+        if(ga !== gb) return ga - gb;
         const sa = a.starred ? 0 : 1, sb = b.starred ? 0 : 1;
         if(sa !== sb) return sa - sb;
         return String(a.username||"").localeCompare(String(b.username||""), "he");
       });
       teacherStudentsCache = students;
-      if(!students.length){
-        body.innerHTML = `<div class="sub">${teacherSchool ? `אין עדיין תלמידים רשומים בבית הספר "${teacherSchool}".` : "עדיין אין תלמידים רשומים עם חשבון."}</div>`;
-        return;
-      }
-      body.innerHTML = `
-        <div class="sub" style="margin-bottom:10px;">${students.length} תלמידים · ממוינים לפי שם (מועדפים קודם) · בחרו תלמיד כדי לראות את התוצאות שלו</div>
-        <select id="teacher-student-select" style="width:100%; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; margin-bottom:16px;">
-          <option value="">— בחרו תלמיד —</option>
-          ${students.map((s,i)=>`<option value="${i}">${s.starred ? "⭐ " : "👤 "}${s.username||"(ללא שם)"}</option>`).join("")}
-        </select>
-        <div id="teacher-student-detail"></div>`;
-      $("#teacher-student-select").addEventListener("change", (e)=>{
-        const idx = e.target.value;
-        teacherHistorySortNewestFirst = true;
-        renderTeacherStudentDetail(idx === "" ? null : teacherStudentsCache[Number(idx)]);
-      });
+      teacherLoadedAt = new Date();
+      renderTeacherList(keepId);
     }catch(e){
       body.innerHTML = `<div class="sub">שגיאה בטעינת נתוני התלמידים. ודאו שכללי Firestore מאפשרים קריאה מציבור התלמידים (ראו הוראות ההגדרה).</div>`;
+    }finally{
+      if(rbtn){ rbtn.disabled = false; rbtn.classList.remove("spinning"); }
     }
   }
+  function renderTeacherList(selectId){
+    const body = $("#teacher-body");
+    const students = teacherStudentsCache;
+    if(!students.length){
+      body.innerHTML = `<div class="sub">${teacherSchool ? `אין עדיין תלמידים רשומים בבית הספר "${escHtml(teacherSchool)}".` : "עדיין אין תלמידים רשומים עם חשבון."}</div>`;
+      return;
+    }
+    const counts = {};
+    students.forEach(s=>{ const g = s.grade || "none"; counts[g] = (counts[g]||0)+1; });
+    const chip = (val, label, n)=>`<button class="grade-chip${teacherGradeFilter===val?" active":""}" data-grade="${val}">${label} <span>${n}</span></button>`;
+    const chips = chip("", "כולם", students.length)
+      + GRADE_ORDER.filter(g=>counts[g]).map(g=>chip(g, "כיתה "+g, counts[g])).join("")
+      + (counts.none ? chip("none", "ללא כיתה", counts.none) : "");
+    // dropdown grouped by grade; the option value stays the index into teacherStudentsCache
+    const groups = [];
+    students.forEach((s,i)=>{
+      const g = s.grade || "none";
+      if(teacherGradeFilter && teacherGradeFilter !== g) return;
+      let grp = groups.find(x=>x.g === g);
+      if(!grp){ grp = { g, items:[] }; groups.push(grp); }
+      grp.items.push({ s, i });
+    });
+    const shown = groups.reduce((n,g)=>n+g.items.length, 0);
+    const timeStr = teacherLoadedAt ? teacherLoadedAt.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit",second:"2-digit"}) : "";
+    body.innerHTML = `
+      <div class="sub" style="margin-bottom:10px;">${shown} תלמידים מוצגים · לפי כיתות, מועדפים קודם · עודכן ${timeStr}</div>
+      <div class="grade-chips">${chips}</div>
+      <select id="teacher-student-select" style="width:100%; padding:12px; border-radius:12px; border:1.5px solid var(--line); background:var(--surface); color:var(--ink); font-size:15px; margin-bottom:16px;">
+        <option value="">— בחרו תלמיד —</option>
+        ${groups.map(grp=>`<optgroup label="${grp.g === "none" ? "ללא כיתה" : "כיתה "+grp.g} (${grp.items.length})">${grp.items.map(({s,i})=>`<option value="${i}">${s.starred ? "⭐ " : "👤 "}${escHtml(s.username||"(ללא שם)")}</option>`).join("")}</optgroup>`).join("")}
+      </select>
+      <div id="teacher-student-detail"></div>`;
+    $$(".grade-chip", body).forEach(b=> b.addEventListener("click", ()=>{
+      teacherGradeFilter = b.dataset.grade;
+      renderTeacherList(null);
+    }));
+    const sel = $("#teacher-student-select");
+    sel.addEventListener("change", (e)=>{
+      const idx = e.target.value;
+      teacherHistorySortNewestFirst = true;
+      renderTeacherStudentDetail(idx === "" ? null : teacherStudentsCache[Number(idx)]);
+    });
+    if(selectId){
+      const i = students.findIndex(x=>x.id === selectId);
+      if(i >= 0 && [...sel.options].some(o=>o.value === String(i))){
+        sel.value = String(i);
+        renderTeacherStudentDetail(students[i]);
+      }
+    }
+  }
+  $("#teacher-refresh-btn").addEventListener("click", ()=>{
+    openTeacherDashboard({ keep:true });
+    toast("מרענן נתונים מהשרת...");
+  });
   function renderTeacherStudentDetail(s){
     const detail = $("#teacher-student-detail");
     if(!detail) return;
@@ -3082,7 +3201,8 @@
           </div>
         </div>
         <div class="sub" style="margin-bottom:4px;">🔑 סיסמה: <b style="color:var(--ink);">${s.password || "(לא הוגדרה סיסמה)"}</b></div>
-        ${s.school ? `<div class="sub" style="margin-bottom:8px;">🏫 בית ספר: <b style="color:var(--ink);">${s.school}</b></div>` : ""}
+        ${s.school ? `<div class="sub" style="margin-bottom:4px;">🏫 בית ספר: <b style="color:var(--ink);">${s.school}</b></div>` : ""}
+        <div class="sub" style="margin-bottom:8px;">🎓 כיתה: <b style="color:var(--ink);">${s.grade || "לא הוגדרה"}</b></div>
         <div>${perArena}</div>
       </div>
 
@@ -3138,7 +3258,8 @@
         const sel = $("#teacher-student-select");
         if(sel){
           const idx = teacherStudentsCache.indexOf(s);
-          if(idx >= 0) sel.options[idx+1].textContent = `${next ? "⭐ " : "👤 "}${s.username||"(ללא שם)"}`;
+          const opt = sel.querySelector(`option[value="${idx}"]`);
+          if(opt) opt.textContent = `${next ? "⭐ " : "👤 "}${s.username||"(ללא שם)"}`;
         }
       }catch(e){
         toast("שגיאה בעדכון הסימון");
@@ -3182,6 +3303,8 @@
     const avgScore = games.length ? Math.round(games.reduce((sum,h)=>sum+(h.score||0),0)/games.length) : "";
     const bestScore = games.length ? Math.max(...games.map(h=>h.score||0)) : "";
     const rows = [
+      ["שם", s.username||"", "כיתה", s.grade||"", "בית ספר", s.school||""],
+      [],
       ["מושג","נלמד","מספר פעמים שנלמד"],
       ...TERMS.map(t => [t.title, learned[t.id] ? "כן" : "לא", String(learnCounts[t.id]||0)]),
       [],
@@ -3822,6 +3945,8 @@
     const isAdmin = role === "admin";
     const isTeacher = role === "teacher" || isAdmin;
     $("#name-gate-school").style.display = isAdmin ? "none" : "block";
+    $("#name-gate-grade").style.display = isTeacher ? "none" : "block";
+    $("#name-gate-grade").value = "";
     $("#name-gate-question").textContent = isAdmin ? "סיסמת מנהל מערכת:" : (isTeacher ? "סיסמת מורה:" : "לפני שמתחילים, איך קוראים לכם?");
     $("#name-gate-input").placeholder = isAdmin ? "סיסמת מנהל" : (isTeacher ? "סיסמת מורה" : "השם המלא שלכם");
     $("#name-gate-input").type = isTeacher ? "password" : "text";
@@ -3833,7 +3958,7 @@
       ? "ניהול בתי ספר, סיסמאות מורים ותצוגת מורה לכל בית ספר"
       : isTeacher
       ? "בחרו את בית הספר שלכם והקלידו את סיסמת המורים שקיבלתם ממנהל המערכת"
-      : "הסיסמה שומרת על ההתקדמות שלכם - אותו שם, סיסמה ובית ספר במכשיר אחר יחברו אתכם לאותה היסטוריה";
+      : "בכל כניסה לאפליקציה צריך להזדהות: שם משתמש, סיסמה, בית ספר וכיתה. אותו שם וסיסמה במכשיר אחר יחברו אתכם לאותה היסטוריה";
     if(isTeacher && teacherSchool) $("#name-gate-school").value = teacherSchool;
     $("#name-gate-msg").textContent = "";
     $("#name-gate-submit").textContent = isAdmin ? "כניסה לניהול המערכת" : (isTeacher ? "כניסה לדשבורד מורה" : "התחילו ללמוד");
@@ -3843,6 +3968,8 @@
   $("#role-admin-btn").addEventListener("click", ()=> setNameGateRole("admin"));
 
   let nameGateBusy = false;
+  // true only after the student identified in THIS page load - every visit starts at the login screen
+  let studentSessionActive = false;
   async function submitNameGate(){
     if(nameGateBusy) return;
     if(nameGateRole === "admin"){
@@ -3885,10 +4012,15 @@
       $("#name-gate-msg").textContent = "תמציאו סיסמה של לפחות 4 תווים כדי להמשיך.";
       return;
     }
+    const grade = $("#name-gate-grade").value.trim();
+    if(!grade){
+      $("#name-gate-msg").textContent = "חובה לבחור כיתה (י׳, י״א או י״ב) כדי להמשיך.";
+      return;
+    }
     nameGateBusy = true;
     $("#name-gate-msg").textContent = "";
     $("#name-gate-submit").textContent = "בודקים...";
-    const result = await resolveStudentLogin(name, password, school);
+    const result = await resolveStudentLogin(name, password, school, grade);
     nameGateBusy = false;
     $("#name-gate-submit").textContent = "התחילו ללמוד";
     if(!result.ok){
@@ -3896,6 +4028,7 @@
       return;
     }
     setStudentName(name);
+    studentSessionActive = true;
     renderHome();
     showView("view-home");
   }
@@ -4579,13 +4712,16 @@
   $("#editorial-play-exit").addEventListener("click", openEditorialMenu);
 
   // ---------- init ----------
-  if(!getStudentName()){
+  // every visit starts at the login screen (students always identify again with
+  // username, password, school and grade). the only exception: a teacher who
+  // refreshed the page within 10 minutes of their last activity goes straight back in
+  const resumeTeacher = loadValidTeacherSession();
+  if(resumeTeacher){
+    enterTeacherDashboard(resumeTeacher.school || "");
+  } else {
+    clearTeacherSession();
     showView("view-name-gate");
     setTimeout(()=>{ try{ $("#name-gate-input").focus(); }catch(e){} }, 50);
-  } else {
-    renderHome();
-    // returning student: make sure their cloud identity/sync is still in place
-    ensureStudentSynced(getStudentName());
   }
 })();
 </script>
